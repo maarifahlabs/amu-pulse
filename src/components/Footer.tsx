@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { BASE_PATH } from "@/lib/env";
 
 export function Footer() {
   return (
@@ -15,7 +14,7 @@ export function Footer() {
           <Link href="/election-guide" className="hover:underline">Election guide</Link>
           <Link href="/poster" className="hover:underline">QR poster</Link>
           <Link href="/candidate/dashboard" className="hover:underline">For candidates</Link>
-          {BASE_PATH ? <a href="/" className="hover:underline">Maarifah Labs</a> : null}
+          <a href="https://www.maarifahlabs.com" className="hover:underline">Maarifah Labs</a>
         </div>
       </div>
     </footer>
