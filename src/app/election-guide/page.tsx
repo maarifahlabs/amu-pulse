@@ -17,8 +17,7 @@ export default async function ElectionGuidePage() {
       <header className="space-y-2">
         <h1 className="text-2xl font-bold sm:text-3xl">Election guide</h1>
         <p className="text-slate-600">
-          Dates here are published only after being checked against official notices, each with its source link. The
-          AMU Registrar&apos;s notices are always the authoritative source.
+          This is the published 2026–27 schedule. The AMU Registrar&apos;s notices remain the authoritative source if a date changes.
         </p>
       </header>
 

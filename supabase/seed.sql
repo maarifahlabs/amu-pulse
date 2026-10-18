@@ -107,12 +107,24 @@ from (values
 join positions p on p.slug = c.position_slug
 on conflict (slug) do nothing;
 
-insert into election_events (title, description, kind, starts_at, source_url)
-select v.title, v.description, v.kind::election_event_kind, v.starts_at::timestamptz, v.source_url
+delete from election_events
+where title in ('Voter list process begins', 'Polling day');
+
+insert into election_events (title, description, kind, starts_at, source_url, verified_at)
+select v.title, v.description, v.kind::election_event_kind, v.starts_at::timestamptz, v.source_url, v.verified_at::timestamptz
 from (values
-  ('Voter list process begins', 'Publication and verification of voter lists.', 'milestone', '2026-10-26T10:00:00+05:30', 'https://www.amu.ac.in/'),
-  ('Polling day', 'Students'' Union election polling.', 'polling', '2026-11-05T09:00:00+05:30', 'https://www.amu.ac.in/')
-) as v(title, description, kind, starts_at, source_url)
+  ('Voter lists displayed at deans'' offices', null, 'milestone', '2026-10-26T10:00:00+05:30', 'https://www.amu.ac.in/', '2026-10-18T12:00:00+05:30'),
+  ('Requests for corrections in voter lists', 'Till 2 pm.', 'milestone', '2026-10-27T14:00:00+05:30', 'https://www.amu.ac.in/', '2026-10-18T12:00:00+05:30'),
+  ('Final voter list released', null, 'milestone', '2026-10-27T16:00:00+05:30', 'https://www.amu.ac.in/', '2026-10-18T12:00:00+05:30'),
+  ('Nominations filed at the AMUSU office', '10 am to 1 pm.', 'milestone', '2026-10-29T10:00:00+05:30', 'https://www.amu.ac.in/', '2026-10-18T12:00:00+05:30'),
+  ('Scrutiny of nominations', 'From 4 pm.', 'milestone', '2026-10-29T16:00:00+05:30', 'https://www.amu.ac.in/', '2026-10-18T12:00:00+05:30'),
+  ('Withdrawal of nominations', '10 am to 1 pm.', 'milestone', '2026-10-30T10:00:00+05:30', 'https://www.amu.ac.in/', '2026-10-18T12:00:00+05:30'),
+  ('List of valid candidates displayed', null, 'milestone', '2026-10-30T16:00:00+05:30', 'https://www.amu.ac.in/', '2026-10-18T12:00:00+05:30'),
+  ('Serial numbers allotted; final list published', '10 am and 4 pm.', 'milestone', '2026-10-31T10:00:00+05:30', 'https://www.amu.ac.in/', '2026-10-18T12:00:00+05:30'),
+  ('Presidential candidates'' speeches from the Union Hall roof', null, 'milestone', '2026-11-03T14:00:00+05:30', 'https://www.amu.ac.in/', '2026-10-18T12:00:00+05:30'),
+  ('Voting in faculties', '9 am to 5 pm. Lunch break from 1 pm to 2 pm.', 'polling', '2026-11-05T09:00:00+05:30', 'https://www.amu.ac.in/', '2026-10-18T12:00:00+05:30'),
+  ('Counting begins', '7 pm. Venue to be announced.', 'milestone', '2026-11-05T19:00:00+05:30', 'https://www.amu.ac.in/', '2026-10-18T12:00:00+05:30')
+) as v(title, description, kind, starts_at, source_url, verified_at)
 where not exists (select 1 from election_events e where e.title = v.title);
 
 insert into issues (slug, title, description, context, category, status, published_at) values

@@ -69,6 +69,8 @@ export interface ElectionEvent {
   description: string | null;
   kind: ElectionEventKind;
   starts_at: string;
+  /** Exact time wording, such as "10 am to 1 pm". */
+  time_label?: string;
   source_url: string;
   verified_at: string | null;
 }

@@ -42,9 +42,7 @@ export default async function HomePage() {
             <div className="space-y-3 rounded-2xl bg-white/10 p-5">
               <p className="text-sm font-semibold">Polling day · {formatDate(polling.starts_at)}</p>
               <Countdown target={polling.starts_at} />
-              <a href={polling.source_url} target="_blank" rel="noopener noreferrer" className="block text-xs text-brand-100 underline">
-                {polling.verified_at ? "Official source" : "Unverified sample date. Check the official notice"}
-              </a>
+              <p className="text-xs text-brand-100">Voting is 9 am to 5 pm, with a lunch break from 1 pm to 2 pm.</p>
             </div>
           )}
         </div>

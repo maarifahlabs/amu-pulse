@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { electionSchedule } from "@/lib/election-schedule";
 import { isSupabaseConfigured } from "@/lib/env";
 import { sampleDataset } from "@/lib/sample-data";
 import { createPublicClient } from "@/lib/supabase/public";
@@ -45,7 +46,7 @@ export const getDataset = cache(async (): Promise<Dataset> => {
     manifestos: (manifestos.data ?? []) as Manifesto[],
     issues: (issues.data ?? []) as Issue[],
     answers: (answers.data ?? []) as CandidateAnswer[],
-    events: (events.data ?? []) as ElectionEvent[],
+    events: events.data?.length ? (events.data as ElectionEvent[]) : electionSchedule,
   };
 });
 

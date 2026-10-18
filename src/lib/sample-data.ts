@@ -1,3 +1,4 @@
+import { electionSchedule } from "@/lib/election-schedule";
 import type { Dataset } from "@/lib/types";
 
 // Illustrative placeholders for demo mode only. These are fictional people and
@@ -65,14 +66,5 @@ export const sampleDataset: Dataset = {
       answer: "Illustrative response: proposes a coverage survey of halls and a public complaint tracker.",
     },
   ],
-  events: [
-    {
-      id: "e1", title: "Voter list process begins (sample)", description: "Check the official AMU Registrar notice.",
-      kind: "milestone", starts_at: "2026-10-26T10:00:00+05:30", source_url: "https://www.amu.ac.in/", verified_at: null,
-    },
-    {
-      id: "e2", title: "Polling day (sample)", description: "Check the official AMU Registrar notice.",
-      kind: "polling", starts_at: "2026-11-05T09:00:00+05:30", source_url: "https://www.amu.ac.in/", verified_at: null,
-    },
-  ],
+  events: electionSchedule,
 };
