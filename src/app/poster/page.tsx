@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import QRCode from "qrcode";
-import { SITE_URL } from "@/lib/env";
+import { absoluteUrl } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "QR poster",
@@ -8,8 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default async function PosterPage() {
-  const svg = await QRCode.toString(SITE_URL, { type: "svg", margin: 1, width: 256 });
-  const host = SITE_URL.replace(/^https?:\/\//, "");
+  const homeUrl = absoluteUrl("/");
+  const svg = await QRCode.toString(homeUrl, { type: "svg", margin: 1, width: 256 });
+  const host = homeUrl.replace(/^https?:\/\//, "");
 
   return (
     <div className="container-page flex flex-col items-center gap-6 py-10 text-center">

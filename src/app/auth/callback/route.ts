@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { SITE_URL } from "@/lib/env";
+import { absoluteUrl } from "@/lib/env";
 import { createSessionClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
@@ -10,8 +10,8 @@ export async function GET(request: NextRequest) {
   if (code) {
     const sb = await createSessionClient();
     const { error } = await sb.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(`${SITE_URL}${next}`);
+    if (!error) return NextResponse.redirect(absoluteUrl(next));
   }
 
-  return NextResponse.redirect(`${SITE_URL}/login?error=${encodeURIComponent("That login link is invalid or has expired.")}`);
+  return NextResponse.redirect(absoluteUrl(`/login?error=${encodeURIComponent("That login link is invalid or has expired.")}`));
 }

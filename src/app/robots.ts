@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
-import { SITE_URL } from "@/lib/env";
+import { absoluteUrl, BASE_PATH } from "@/lib/env";
 
 export default function robots(): MetadataRoute.Robots {
+  const hidden = ["/admin", "/candidate", "/login", "/auth", "/api"].map((path) => `${BASE_PATH}${path}`);
   return {
-    rules: { userAgent: "*", allow: "/", disallow: ["/admin", "/candidate", "/login", "/auth", "/api"] },
-    sitemap: `${SITE_URL}/sitemap.xml`,
+    rules: { userAgent: "*", allow: BASE_PATH || "/", disallow: hidden },
+    sitemap: absoluteUrl("/sitemap.xml"),
   };
 }

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ComparisonTable } from "@/components/ComparisonTable";
 import { ShareButton } from "@/components/ShareButton";
 import { findAnswer, getDataset } from "@/lib/data";
-import { SITE_URL } from "@/lib/env";
+import { absoluteUrl } from "@/lib/env";
 
 export const metadata: Metadata = {
   title: "Compare candidates",
@@ -25,7 +25,7 @@ export default async function ComparePage({ searchParams }: { searchParams: Sear
   const query = new URLSearchParams();
   if (position) query.set("position", position.slug);
   if (requested?.length) query.set("candidates", selected.map((c) => c.slug).join(","));
-  const shareUrl = `${SITE_URL}/compare?${query.toString()}`;
+  const shareUrl = `${absoluteUrl("/compare")}?${query.toString()}`;
 
   return (
     <div className="container-page space-y-6 py-8">

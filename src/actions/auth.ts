@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { isSupabaseConfigured, SITE_URL } from "@/lib/env";
+import { absoluteUrl, isSupabaseConfigured } from "@/lib/env";
 import { messageHref } from "@/lib/format";
 import { createSessionClient } from "@/lib/supabase/server";
 import { emailSchema, firstError, formToObject } from "@/lib/validations";
@@ -20,7 +20,7 @@ export async function sendMagicLink(formData: FormData) {
   const sb = await createSessionClient();
   const { error } = await sb.auth.signInWithOtp({
     email: parsed.data.email,
-    options: { emailRedirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(next)}` },
+    options: { emailRedirectTo: `${absoluteUrl("/auth/callback")}?next=${encodeURIComponent(next)}` },
   });
 
   if (error) redirect(messageHref("/login", "error", "Could not send the login link. Please try again shortly."));

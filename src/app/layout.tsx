@@ -2,11 +2,11 @@ import type { Metadata, Viewport } from "next";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { SampleDataBanner } from "@/components/SampleDataBanner";
-import { SITE_URL } from "@/lib/env";
+import { absoluteUrl } from "@/lib/env";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
+  metadataBase: new URL(`${absoluteUrl("/")}/`),
   title: {
     default: "AMU Pulse — Your Campus. Your Questions. Your Choice.",
     template: "%s · AMU Pulse",

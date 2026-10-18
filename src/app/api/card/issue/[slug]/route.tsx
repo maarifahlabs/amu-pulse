@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import QRCode from "qrcode";
 import { getDataset, issueResponseCount } from "@/lib/data";
-import { SITE_URL } from "@/lib/env";
+import { absoluteUrl } from "@/lib/env";
 
 export const revalidate = 300;
 
@@ -13,8 +13,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
   if (!issue) return new Response("Not found", { status: 404 });
 
   const responded = issueResponseCount(ds, issue.id);
-  const host = SITE_URL.replace(/^https?:\/\//, "");
-  const qr = await QRCode.toDataURL(`${SITE_URL}/issues/${issue.slug}`, { margin: 1, width: 180 });
+  const pageUrl = absoluteUrl(`/issues/${issue.slug}`);
+  const host = pageUrl.replace(/^https?:\/\//, "");
+  const qr = await QRCode.toDataURL(pageUrl, { margin: 1, width: 180 });
 
   return new ImageResponse(
     (
@@ -49,7 +50,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
             {responded} of {ds.candidates.length} candidates responded · Read every answer
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: 22, opacity: 0.8 }}>
-            <div style={{ display: "flex" }}>{`${host}/issues/${issue.slug}`}</div>
+            <div style={{ display: "flex" }}>{host}</div>
             <div style={{ display: "flex" }}>Independent · Nonpartisan · Not affiliated with AMU</div>
           </div>
         </div>

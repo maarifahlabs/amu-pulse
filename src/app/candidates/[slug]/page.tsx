@@ -5,7 +5,7 @@ import { Avatar } from "@/components/Avatar";
 import { CompletenessIndicator } from "@/components/CompletenessIndicator";
 import { ShareButton } from "@/components/ShareButton";
 import { completeness, findAnswer, getDataset, latestManifesto } from "@/lib/data";
-import { SITE_URL } from "@/lib/env";
+import { absoluteUrl } from "@/lib/env";
 import { formatDate } from "@/lib/format";
 
 export const revalidate = 60;
@@ -61,7 +61,7 @@ export default async function CandidatePage({ params }: Props) {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <ShareButton
-          url={`${SITE_URL}/candidates/${candidate.slug}`}
+          url={absoluteUrl(`/candidates/${candidate.slug}`)}
           title={candidate.name}
           text={`See ${candidate.name}'s manifesto and answers to campus issues on AMU Pulse`}
         />

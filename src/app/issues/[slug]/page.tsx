@@ -5,7 +5,7 @@ import { Avatar } from "@/components/Avatar";
 import { QuestionForm } from "@/components/QuestionForm";
 import { ShareButton } from "@/components/ShareButton";
 import { getApprovedQuestions, getDataset, issueResponseCount, issueResponsesByPosition } from "@/lib/data";
-import { SITE_URL } from "@/lib/env";
+import { absoluteUrl } from "@/lib/env";
 import { formatDate } from "@/lib/format";
 
 export const revalidate = 60;
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const data = await load(slug);
   if (!data) return {};
-  const card = `/api/card/issue/${slug}`;
+  const card = absoluteUrl(`/api/card/issue/${slug}`);
   return {
     title: data.issue.title,
     description: data.issue.description ?? undefined,
@@ -40,7 +40,7 @@ export default async function IssuePage({ params }: Props) {
   const groups = issueResponsesByPosition(ds, issue.id);
   const responded = issueResponseCount(ds, issue.id);
   const questions = await getApprovedQuestions(issue.id);
-  const url = `${SITE_URL}/issues/${issue.slug}`;
+  const url = absoluteUrl(`/issues/${issue.slug}`);
   const number = String(ds.issues.length - ds.issues.indexOf(issue)).padStart(3, "0");
 
   return (
@@ -64,7 +64,7 @@ export default async function IssuePage({ params }: Props) {
           url={url}
           title={issue.title}
           text={`Campus Issue: ${issue.title} — see every candidate's response on AMU Pulse`}
-          cardUrl={`/api/card/issue/${issue.slug}`}
+          cardUrl={absoluteUrl(`/api/card/issue/${issue.slug}`)}
         />
       </header>
 
