@@ -49,7 +49,7 @@ export default async function CandidatePage({ params }: Props) {
           <p className="text-sm text-slate-600">{[candidate.department, candidate.faculty].filter(Boolean).join(" · ")}</p>
           <CompletenessIndicator data={stats} />
           {!stats.claimed && (
-            <p className="text-xs text-slate-500">This profile has not been claimed by the candidate yet.</p>
+            <Link href={`/claim/${candidate.slug}`} className="btn-primary">Claim this profile</Link>
           )}
           {candidate.official_source_url && (
             <a href={candidate.official_source_url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-700 underline">

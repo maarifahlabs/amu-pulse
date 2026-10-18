@@ -52,7 +52,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: S
   const db = createAdminClient();
 
   const [claims, profileUpdates, manifestos, answers, questions, events, issues, candidates, positions, logs] = await Promise.all([
-    db.from("candidate_claims").select("id, evidence, created_at, candidates(name), profiles!candidate_claims_profile_id_fkey(display_name)").eq("status", "pending").order("created_at"),
+    db.from("candidate_claims").select("id, evidence, created_at, candidate_id, candidates(name), profiles!candidate_claims_profile_id_fkey(display_name)").eq("status", "pending").order("created_at"),
     db.from("candidates").select("id, name, bio_pending, photo_pending_url").eq("profile_update_status", "pending"),
     db.from("manifestos").select("id, content, source_url, submitted_at, candidates(name)").eq("status", "pending").order("submitted_at"),
     db.from("candidate_answers").select("id, answer, source_url, updated_at, candidates(name), issues(title)").eq("status", "pending").order("updated_at"),
@@ -76,17 +76,25 @@ export default async function AdminDashboard({ searchParams }: { searchParams: S
       <FlashMessage ok={ok} error={error} />
 
       <Section title="Candidate claims" count={claims.data?.length}>
-        {claims.data?.length ? claims.data.map((c) => (
-          <div key={c.id} className="space-y-2 border-b border-slate-100 pb-3 last:border-0">
-            <p className="text-sm">
-              <strong>{joinedField(c.profiles, "display_name") || "Unknown user"}</strong> claims{" "}
-              <strong>{joinedField(c.candidates, "name")}</strong>
-            </p>
-            <p className="rounded-lg bg-slate-50 p-2 text-sm">{c.evidence}</p>
-            <p className="text-xs text-slate-500">Verify identity independently before approving.</p>
-            <ReviewButtons id={c.id} action={reviewClaim} />
-          </div>
-        )) : <Empty />}
+        {claims.data?.length ? claims.data.map((c) => {
+          const duplicates = claims.data!.filter((other) => other.candidate_id === c.candidate_id).length;
+          return (
+            <div key={c.id} className="space-y-2 border-b border-slate-100 pb-3 last:border-0">
+              <p className="text-sm">
+                <strong>{joinedField(c.profiles, "display_name") || "Unknown user"}</strong> claims{" "}
+                <strong>{joinedField(c.candidates, "name")}</strong>
+              </p>
+              <p className="whitespace-pre-line rounded-lg bg-slate-50 p-2 text-sm">{c.evidence}</p>
+              {duplicates > 1 && (
+                <p className="text-xs font-medium text-amber-800">
+                  {duplicates} people have pending claims for this profile. Approving one rejects the others.
+                </p>
+              )}
+              <p className="text-xs text-slate-500">Check the email, phone and proof of candidacy before approving.</p>
+              <ReviewButtons id={c.id} action={reviewClaim} />
+            </div>
+          );
+        }) : <Empty />}
       </Section>
 
       <Section title="Profile updates" count={profileUpdates.data?.length}>

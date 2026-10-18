@@ -59,7 +59,15 @@ export const questionSchema = z.object({
 
 export const claimSchema = z.object({
   candidateId: uuid,
-  evidence: z.string().trim().min(10, "Explain how we can verify you").max(1000),
+  slug,
+  email: z.string().trim().toLowerCase().email("Enter a valid email address"),
+  phone: z
+    .string()
+    .trim()
+    .min(8, "Enter a phone number")
+    .max(20)
+    .regex(/^[0-9+\-\s()]+$/, "Enter a valid phone number"),
+  proof: z.string().trim().min(10, "Describe how we can verify your candidacy").max(1000),
 });
 
 export const profileUpdateSchema = z.object({

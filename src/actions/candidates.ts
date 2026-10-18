@@ -9,6 +9,7 @@ import {
 } from "@/lib/validations";
 
 const DASHBOARD = "/candidate/dashboard";
+const CLAIM = "/claim";
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 const PHOTO_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
@@ -31,40 +32,49 @@ async function requireLinkedCandidate() {
   return { viewer, candidate };
 }
 
+function claimFail(slug: string, message: string): never {
+  const path = /^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug) ? `/claim/${slug}` : CLAIM;
+  redirect(messageHref(path, "error", message));
+}
+
 export async function submitClaim(formData: FormData) {
-  const viewer = await requireViewer(DASHBOARD);
-  const parsed = claimSchema.safeParse(formToObject(formData));
-  if (!parsed.success) fail(firstError(parsed.error));
+  const viewer = await requireViewer(CLAIM);
+  const raw = formToObject(formData);
+  const parsed = claimSchema.safeParse(raw);
+  if (!parsed.success) claimFail(raw.slug ?? "", firstError(parsed.error));
 
   const db = createAdminClient();
   const { data: candidate } = await db
     .from("candidates")
-    .select("id, profile_id")
+    .select("id, slug, profile_id")
     .eq("id", parsed.data.candidateId)
     .maybeSingle();
-  if (!candidate) fail("Candidate not found.");
-  if (candidate.profile_id) fail("This profile has already been claimed. Contact the moderators if this is wrong.");
+  if (!candidate || candidate.slug !== parsed.data.slug) claimFail(parsed.data.slug, "Candidate not found.");
+  if (candidate.profile_id) claimFail(candidate.slug, "This profile has already been claimed. Contact the moderators if this is wrong.");
 
   const { data: existing } = await db
     .from("candidate_claims")
-    .select("id")
+    .select("id, candidate_id")
     .eq("profile_id", viewer.id)
     .eq("status", "pending")
     .maybeSingle();
-  if (existing) fail("You already have a claim awaiting review.");
+  if (existing && existing.candidate_id !== candidate.id) {
+    claimFail(candidate.slug, "You already have a claim awaiting review. Wait for that decision before claiming another profile.");
+  }
 
+  const evidence = `Email: ${parsed.data.email}\nPhone: ${parsed.data.phone}\nProof of candidacy:\n${parsed.data.proof}`;
   const { data, error } = await db
     .from("candidate_claims")
     .upsert(
-      { candidate_id: candidate.id, profile_id: viewer.id, evidence: parsed.data.evidence, status: "pending" },
+      { candidate_id: candidate.id, profile_id: viewer.id, evidence, status: "pending" },
       { onConflict: "candidate_id,profile_id" },
     )
     .select("id")
     .single();
-  if (error) fail("Could not submit your claim.");
+  if (error) claimFail(candidate.slug, "Could not submit your claim.");
 
   await audit(viewer.id, "claim.submit", "candidate_claim", data.id, { candidate_id: candidate.id });
-  done("Claim submitted. A moderator will verify your identity.");
+  redirect(messageHref(DASHBOARD, "ok", "Verification submitted. A moderator will review your identity."));
 }
 
 export async function submitProfileUpdate(formData: FormData) {

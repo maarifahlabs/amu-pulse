@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { signOut } from "@/actions/auth";
-import { submitAnswer, submitClaim, submitManifesto, submitProfileUpdate } from "@/actions/candidates";
+import { submitAnswer, submitManifesto, submitProfileUpdate } from "@/actions/candidates";
+import { ClaimSteps } from "@/components/ClaimSteps";
 import { FlashMessage } from "@/components/FlashMessage";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireViewer } from "@/lib/auth";
@@ -46,7 +47,15 @@ export default async function CandidateDashboard({ searchParams }: { searchParam
         </div>
       </header>
       <FlashMessage ok={ok} error={error} />
-      {candidate ? <LinkedCandidate candidate={candidate} /> : <ClaimSection viewerId={viewer.id} />}
+      {candidate ? (
+        <>
+          <ClaimSteps current={5} />
+          <p className="text-sm font-medium text-brand-800">Profile claimed successfully. You can publish your bio, manifesto and answers below. Each one is reviewed before it appears publicly.</p>
+          <LinkedCandidate candidate={candidate} />
+        </>
+      ) : (
+        <ClaimSection viewerId={viewer.id} />
+      )}
     </div>
   );
 }
@@ -60,51 +69,35 @@ async function ClaimSection({ viewerId }: { viewerId: string }) {
   const pending = claims?.find((c) => c.status === "pending");
 
   return (
-    <section className="card space-y-4">
-      <h2 className="text-lg font-bold">Claim your candidate profile</h2>
-      <p className="text-sm text-slate-600">
-        Profiles are created by moderators from the official candidate list. Claim yours so you can publish a bio,
-        manifesto and answers. A moderator will verify your identity before anything is linked.
-      </p>
-      {claims && claims.length > 0 && (
-        <ul className="space-y-1 text-sm">
-          {claims.map((c) => (
-            <li key={c.id} className="flex items-center gap-2">
-              <span>{joinedField(c.candidates, "name")}</span> <StatusBadge status={c.status} />
-            </li>
-          ))}
-        </ul>
-      )}
-      {pending ? (
-        <p className="text-sm font-medium">Your claim is awaiting review.</p>
-      ) : (
-        <form action={submitClaim} className="space-y-3">
-          <div>
-            <label htmlFor="candidateId" className="label">Your profile</label>
-            <select id="candidateId" name="candidateId" required className="input">
-              <option value="">Select…</option>
-              {(unclaimed ?? []).map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} — {joinedField(c.positions, "title")}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="evidence" className="label">How can moderators verify you?</label>
-            <textarea
-              id="evidence"
-              name="evidence"
-              required
-              rows={3}
-              className="input"
-              placeholder="e.g. enrolment number, official nomination reference, and a phone number moderators can call"
-            />
-            <p className="mt-1 text-xs text-slate-500">Visible only to moderators.</p>
-          </div>
-          <button className="btn-primary">Submit claim</button>
-        </form>
-      )}
+    <section className="space-y-4">
+      <ClaimSteps current={pending ? 4 : 1} />
+      <div className="card space-y-4">
+        <h2 className="text-lg font-bold">{pending ? "Waiting for verification" : "Claim your candidate profile"}</h2>
+        {claims && claims.length > 0 && (
+          <ul className="space-y-1 text-sm">
+            {claims.map((c) => (
+              <li key={c.id} className="flex items-center gap-2">
+                <span>{joinedField(c.candidates, "name")}</span> <StatusBadge status={c.status} />
+              </li>
+            ))}
+          </ul>
+        )}
+        {pending ? (
+          <p className="text-sm text-slate-700">
+            A moderator is checking your email, phone number and proof of candidacy. You will get dashboard access after the claim is approved.
+          </p>
+        ) : (
+          <>
+            <p className="text-sm text-slate-600">
+              Search the official list by your name, post, or serial number, then submit verification for the unclaimed profile.
+            </p>
+            <Link href="/claim" className="btn-primary">Find your profile</Link>
+          </>
+        )}
+        {unclaimed && unclaimed.length === 0 && !pending && (
+          <p className="text-xs text-slate-500">Every listed profile is already claimed.</p>
+        )}
+      </div>
     </section>
   );
 }
