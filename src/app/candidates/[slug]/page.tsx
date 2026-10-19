@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import { CompletenessIndicator } from "@/components/CompletenessIndicator";
+import { ProfileViews } from "@/components/ProfileViews";
 import { ShareButton } from "@/components/ShareButton";
 import { completeness, findAnswer, getDataset, latestManifesto } from "@/lib/data";
 import { absoluteUrl } from "@/lib/env";
@@ -46,6 +47,7 @@ export default async function CandidatePage({ params }: Props) {
         <div className="flex-1 space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">{position?.title}</p>
           <h1 className="text-2xl font-bold">{candidate.name}</h1>
+          <ProfileViews slug={candidate.slug} />
           <p className="text-sm text-slate-600">{[candidate.department, candidate.faculty].filter(Boolean).join(" · ")}</p>
           <CompletenessIndicator data={stats} />
           {!stats.claimed && (

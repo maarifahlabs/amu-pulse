@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { audit, requireViewer } from "@/lib/auth";
-import { messageHref } from "@/lib/format";
+import { joinedField, messageHref } from "@/lib/format";
+import { sendClaimNotice } from "@/lib/mail";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   answerSchema, claimSchema, firstError, formToObject, manifestoSchema, profileUpdateSchema,
@@ -46,7 +47,7 @@ export async function submitClaim(formData: FormData) {
   const db = createAdminClient();
   const { data: candidate } = await db
     .from("candidates")
-    .select("id, slug, profile_id")
+    .select("id, slug, name, ballot_number, profile_id, positions(title)")
     .eq("id", parsed.data.candidateId)
     .maybeSingle();
   if (!candidate || candidate.slug !== parsed.data.slug) claimFail(parsed.data.slug, "Candidate not found.");
@@ -74,7 +75,20 @@ export async function submitClaim(formData: FormData) {
   if (error) claimFail(candidate.slug, "Could not submit your claim.");
 
   await audit(viewer.id, "claim.submit", "candidate_claim", data.id, { candidate_id: candidate.id });
-  redirect(messageHref(DASHBOARD, "ok", "Verification submitted. A moderator will review your identity."));
+  const mailed = await sendClaimNotice({
+    candidateName: candidate.name,
+    post: joinedField(candidate.positions, "title"),
+    serial: candidate.ballot_number == null ? "" : String(candidate.ballot_number).padStart(2, "0"),
+    slug: candidate.slug,
+    accountEmail: viewer.email ?? "",
+    contactEmail: parsed.data.email,
+    phone: parsed.data.phone,
+    proof: parsed.data.proof,
+  });
+  const message = mailed
+    ? "Verification submitted. Your details were emailed for review. You can edit the profile after it is approved."
+    : "Verification submitted. A moderator will review your details. You can edit the profile after it is approved.";
+  redirect(messageHref(CLAIM, "ok", message));
 }
 
 export async function submitProfileUpdate(formData: FormData) {

@@ -93,8 +93,8 @@ export default async function HomePage() {
             ))}
           </dl>
           <p className="text-sm text-slate-600">
-            Are you a candidate? <Link href="/candidate/dashboard" className="font-semibold text-brand-700 underline">Claim your profile</Link>{" "}
-            to publish your bio, manifesto and answers.
+            Are you a candidate? <Link href="/claim" className="font-semibold text-brand-700 underline">Claim your profile</Link>.
+            You can edit it only after a moderator approves the claim.
           </p>
         </div>
       </section>

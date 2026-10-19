@@ -56,4 +56,13 @@
   .prose-text {
     @apply whitespace-pre-line leading-relaxed text-slate-700;
   }
+  .nav-progress {
+    width: 30%;
+    animation: amu-load 1s ease-out forwards;
+  }
+}
+
+@keyframes amu-load {
+  from { width: 8%; }
+  to { width: 92%; }
 }

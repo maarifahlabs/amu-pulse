@@ -4,6 +4,7 @@ import { signOut } from "@/actions/auth";
 import { submitAnswer, submitManifesto, submitProfileUpdate } from "@/actions/candidates";
 import { ClaimSteps } from "@/components/ClaimSteps";
 import { FlashMessage } from "@/components/FlashMessage";
+import { ProfileViews } from "@/components/ProfileViews";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireViewer } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -84,7 +85,7 @@ async function ClaimSection({ viewerId }: { viewerId: string }) {
         )}
         {pending ? (
           <p className="text-sm text-slate-700">
-            A moderator is checking your email, phone number and proof of candidacy. You will get dashboard access after the claim is approved.
+            A moderator is checking the details sent for review. Profile editing stays locked until the claim is approved.
           </p>
         ) : (
           <>
@@ -129,6 +130,7 @@ async function LinkedCandidate({ candidate }: { candidate: LinkedCandidateRow })
       <section className="card flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-lg font-bold">{candidate.name}</p>
+          <ProfileViews slug={candidate.slug} record={false} />
           <p className="text-sm text-slate-600">
             Listing: <StatusBadge status={candidate.verification_status} /> · {answeredCount}/{issues?.length ?? 0} answers published
           </p>

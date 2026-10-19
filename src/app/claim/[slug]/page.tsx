@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { submitClaim } from "@/actions/candidates";
 import { ClaimSteps } from "@/components/ClaimSteps";
 import { FlashMessage } from "@/components/FlashMessage";
+import { SubmitButton } from "@/components/SubmitButton";
 import { getViewer } from "@/lib/auth";
 import { getDataset } from "@/lib/data";
 
@@ -68,7 +69,7 @@ export default async function ClaimProfilePage({ params, searchParams }: Props) 
             />
             <p className="mt-1 text-xs text-slate-500">Visible only to moderators.</p>
           </div>
-          <button className="btn-primary">Submit for verification</button>
+          <SubmitButton className="btn-primary" pendingLabel="Submitting…">Submit for verification</SubmitButton>
         </form>
       )}
       <Link href="/claim" className="inline-block text-sm font-semibold text-brand-700 hover:underline">Back to search</Link>

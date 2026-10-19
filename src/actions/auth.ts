@@ -9,7 +9,7 @@ import { firstError, formToObject, passwordAuthSchema } from "@/lib/validations"
 const OTP_TYPES = ["signup", "invite", "magiclink", "recovery", "email_change", "email"] as const;
 
 function safeNext(next: string | undefined) {
-  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/candidate/dashboard";
+  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
 }
 
 function authFailure(message: string) {

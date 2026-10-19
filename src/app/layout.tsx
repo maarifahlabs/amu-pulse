@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { NavProgress } from "@/components/NavProgress";
 import { SampleDataBanner } from "@/components/SampleDataBanner";
 import { absoluteUrl } from "@/lib/env";
 import "./globals.css";
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2">
           Skip to content
         </a>
+        <NavProgress />
         <SampleDataBanner />
         <Header />
         <main id="main" className="flex-1 pb-16">

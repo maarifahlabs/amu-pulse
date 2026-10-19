@@ -6,6 +6,7 @@ const NAV = [
   { href: "/compare", label: "Compare" },
   { href: "/election-guide", label: "Election guide" },
   { href: "/claim", label: "Claim profile" },
+  { href: "/login", label: "Sign in" },
 ];
 
 export function Header() {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClaimSteps } from "@/components/ClaimSteps";
+import { FlashMessage } from "@/components/FlashMessage";
 import { getDataset } from "@/lib/data";
 import type { Candidate, Position } from "@/lib/types";
 
@@ -22,8 +23,8 @@ function matches(candidate: Candidate, position: Position | undefined, query: st
   return byNameOrPost || padded === query || serial === bare;
 }
 
-export default async function ClaimSearchPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { q } = await searchParams;
+export default async function ClaimSearchPage({ searchParams }: { searchParams: Promise<{ q?: string; ok?: string; error?: string }> }) {
+  const { q, ok, error } = await searchParams;
   const query = q?.trim() ?? "";
   const ds = await getDataset();
   const results = query
@@ -35,10 +36,11 @@ export default async function ClaimSearchPage({ searchParams }: { searchParams: 
       <header className="space-y-2">
         <h1 className="text-2xl font-bold sm:text-3xl">Claim your candidate profile</h1>
         <p className="text-slate-600">
-          Find the profile created from the official list, then submit your contact details and proof of candidacy.
-          A moderator checks your identity before the profile is linked to you.
+          Students, candidates and admins use the same sign-in. Find your official profile, then submit your contact details and proof.
+          Those details are emailed for review. You can edit the profile only after a moderator approves the claim.
         </p>
       </header>
+      <FlashMessage ok={ok} error={error} />
       <ClaimSteps current={1} />
 
       <form className="flex flex-col gap-2 sm:flex-row" role="search">

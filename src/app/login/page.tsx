@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { signIn, signUp } from "@/actions/auth";
 import { FlashMessage } from "@/components/FlashMessage";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export const metadata: Metadata = { title: "Log in", robots: { index: false } };
 
@@ -29,7 +30,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
           <label htmlFor="password" className="label">Password</label>
           <input id="password" name="password" type="password" required minLength={8} autoComplete="current-password" className="input" />
         </div>
-        <button className="btn-primary w-full">Sign in</button>
+        <SubmitButton className="btn-primary w-full" pendingLabel="Signing in…">Sign in</SubmitButton>
       </form>
       <form action={signUp} className="card space-y-4">
         <h2 className="font-semibold">Create an account</h2>
@@ -42,7 +43,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
           <label htmlFor="signup-password" className="label">Password</label>
           <input id="signup-password" name="password" type="password" required minLength={8} autoComplete="new-password" className="input" />
         </div>
-        <button className="btn-secondary w-full">Create account</button>
+        <SubmitButton className="btn-secondary w-full" pendingLabel="Creating account…">Create account</SubmitButton>
       </form>
     </div>
   );
