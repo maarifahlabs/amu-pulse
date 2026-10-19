@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { electionSchedule } from "@/lib/election-schedule";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -16,7 +17,7 @@ const CANDIDATE_COLUMNS =
  * candidates, ~15 issues) this is cheaper and simpler than per-page queries,
  * and RLS guarantees only published, verified rows come back.
  */
-export const getDataset = cache(async (): Promise<Dataset> => {
+export const getDataset = cache(unstable_cache(async (): Promise<Dataset> => {
   if (!isSupabaseConfigured) return sampleDataset;
   const sb = createPublicClient();
 
@@ -48,7 +49,25 @@ export const getDataset = cache(async (): Promise<Dataset> => {
     answers: (answers.data ?? []) as CandidateAnswer[],
     events: events.data?.length ? (events.data as ElectionEvent[]) : electionSchedule,
   };
-});
+}, ["public-dataset"], { revalidate: 120 }));
+
+export interface TrendingRow {
+  slug: string;
+  daily_views: number;
+  total_views: number;
+}
+
+export const getTrending = cache(unstable_cache(async (): Promise<TrendingRow[] | null> => {
+  if (!isSupabaseConfigured) return null;
+  const sb = createPublicClient();
+  const { data, error } = await sb.rpc("trending_candidates", { p_limit: 5 });
+  if (error || !Array.isArray(data)) return null;
+  return (data as TrendingRow[]).map((row) => ({
+    slug: row.slug,
+    daily_views: Number(row.daily_views ?? 0),
+    total_views: Number(row.total_views ?? 0),
+  }));
+}, ["trending-candidates"], { revalidate: 60 }));
 
 export function latestManifesto(ds: Dataset, candidateId: string) {
   return ds.manifestos.find((m) => m.candidate_id === candidateId) ?? null;

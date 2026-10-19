@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Footer } from "@/components/Footer";
+import { QueryMessage } from "@/components/QueryMessage";
 import { Header } from "@/components/Header";
 import { NavProgress } from "@/components/NavProgress";
 import { SampleDataBanner } from "@/components/SampleDataBanner";
@@ -33,6 +35,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <NavProgress />
         <SampleDataBanner />
         <Header />
+        <Suspense>
+          <QueryMessage />
+        </Suspense>
         <main id="main" className="flex-1 pb-16">
           {children}
         </main>

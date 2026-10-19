@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { Countdown } from "@/components/Countdown";
 import { ElectionTimeline } from "@/components/ElectionTimeline";
+import { CandidateCard } from "@/components/CandidateCard";
 import { IssueCard } from "@/components/IssueCard";
-import { getDataset, issueResponseCount, pollingEvent } from "@/lib/data";
+import { completeness, getDataset, getTrending, issueResponseCount, pollingEvent } from "@/lib/data";
 import { formatDate } from "@/lib/format";
 
-export const revalidate = 60;
+export const revalidate = 120;
 
 const STEPS = [
   { title: "Discover", text: "Browse the campus issues students care about and who is contesting." },
@@ -14,9 +15,16 @@ const STEPS = [
 ];
 
 export default async function HomePage() {
-  const ds = await getDataset();
+  const [ds, trending] = await Promise.all([getDataset(), getTrending()]);
   const polling = pollingEvent(ds);
   const featured = ds.issues.slice(0, 6);
+  const ranked = trending
+    ? trending.flatMap((row) => {
+        const candidate = ds.candidates.find((item) => item.slug === row.slug);
+        return candidate ? [{ candidate, views: row.total_views }] : [];
+      })
+    : ds.candidates.slice(0, 5).map((candidate) => ({ candidate, views: null as number | null }));
+  const top = ranked.slice(0, 5);
 
   return (
     <>
@@ -57,6 +65,26 @@ export default async function HomePage() {
           </div>
         ))}
       </section>
+
+      {top.length > 0 && (
+        <section className="container-page space-y-4 pt-2">
+          <div className="flex items-end justify-between">
+            <h2 className="text-xl font-bold">Trending candidates</h2>
+            <Link href="/candidates" className="text-sm font-semibold text-brand-700 hover:underline">View all</Link>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {top.map(({ candidate, views }) => (
+              <CandidateCard
+                key={candidate.id}
+                candidate={candidate}
+                position={ds.positions.find((item) => item.id === candidate.position_id)}
+                stats={completeness(ds, candidate)}
+                views={views}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="container-page space-y-4">
         <div className="flex items-end justify-between">

@@ -1,6 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/env";
+import { messageHref } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createSessionClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/lib/types";
@@ -40,7 +41,9 @@ export async function requireViewer(next: string) {
 
 export async function requireAdmin() {
   const viewer = await requireViewer("/admin/dashboard");
-  if (viewer.role !== "admin") redirect("/");
+  if (viewer.role !== "admin") {
+    redirect(messageHref("/", "error", "This account is not an admin yet. Grant the admin role in Supabase, then sign in again."));
+  }
   return viewer;
 }
 
