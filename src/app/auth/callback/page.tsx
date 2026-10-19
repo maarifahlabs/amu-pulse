@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { completeMagicLink } from "@/actions/auth";
 
 export const metadata: Metadata = { title: "Confirm login", robots: { index: false } };
@@ -15,7 +16,9 @@ type SearchParams = Promise<{
 
 export default async function AuthCallbackPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
-  const next = params.next && params.next.startsWith("/") && !params.next.startsWith("//") ? params.next : "/candidate/dashboard";
+  const stored = (await cookies()).get("amu_auth_next")?.value;
+  const requested = params.next || stored;
+  const next = requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : "/candidate/dashboard";
   const ready = Boolean(params.code || params.token_hash);
 
   return (

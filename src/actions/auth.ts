@@ -1,6 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { SITE_URL, isSupabaseConfigured } from "@/lib/env";
 import { messageHref } from "@/lib/format";
@@ -13,8 +13,21 @@ function safeNext(next: string | undefined) {
   return next && next.startsWith("/") && !next.startsWith("//") ? next : "/candidate/dashboard";
 }
 
-/** Callback must return to the same host that stored the login cookie. */
-async function callbackUrl(next: string) {
+const NEXT_COOKIE = "amu_auth_next";
+
+function sendFailure(message: string) {
+  const text = message.toLowerCase();
+  if (text.includes("rate")) return "Too many login emails were requested. Wait about an hour, then try again.";
+  if (text.includes("redirect") || text.includes("not allowed")) {
+    return "Supabase rejected the login address. In Authentication → URL configuration, set the Site URL to https://amu-pulse.maarifahlabs.com and add https://amu-pulse.maarifahlabs.com/auth/callback.";
+  }
+  if (text.includes("smtp") || text.includes("sending")) return "Supabase could not deliver the email. Check Authentication → Emails, then try again.";
+  const detail = message.replace(/\s+/g, " ").trim().slice(0, 160);
+  return detail ? `Could not send the login link. ${detail}` : "Could not send the login link. Please try again shortly.";
+}
+
+/** Callback must be the exact URL allowed in Supabase, on the same host as the login cookie. */
+async function callbackUrl() {
   const h = await headers();
   const host = (h.get("x-forwarded-host") ?? h.get("host") ?? "").split(",")[0]?.trim();
   const proto = h.get("x-forwarded-proto") ?? "https";
@@ -32,7 +45,7 @@ async function callbackUrl(next: string) {
       origin = SITE_URL;
     }
   }
-  return `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
+  return `${origin}/auth/callback`;
 }
 
 export async function sendMagicLink(formData: FormData) {
@@ -42,13 +55,23 @@ export async function sendMagicLink(formData: FormData) {
   if (!parsed.success) redirect(messageHref("/login", "error", firstError(parsed.error)));
 
   const next = safeNext(parsed.data.next);
+  const redirectTo = await callbackUrl();
+  const jar = await cookies();
+  jar.set(NEXT_COOKIE, next, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: redirectTo.startsWith("https://"),
+    path: "/",
+    maxAge: 60 * 60,
+  });
+
   const sb = await createSessionClient();
   const { error } = await sb.auth.signInWithOtp({
     email: parsed.data.email,
-    options: { emailRedirectTo: await callbackUrl(next) },
+    options: { emailRedirectTo: redirectTo },
   });
 
-  if (error) redirect(messageHref("/login", "error", "Could not send the login link. Please try again shortly."));
+  if (error) redirect(messageHref("/login", "error", sendFailure(error.message)));
   redirect(messageHref("/login", "ok", "Check your email. Open the latest link, then press Continue."));
 }
 
