@@ -12,13 +12,24 @@ export interface ClaimNotice {
   proof: string;
 }
 
-/** Emails claim details to the review inbox. Skips quietly when mail is not configured. */
-export async function sendClaimNotice(notice: ClaimNotice): Promise<boolean> {
-  const to = process.env.CLAIM_NOTIFY_EMAIL;
-  const key = process.env.RESEND_API_KEY;
-  if (!to || !key) return false;
+function senderAddress(value: string) {
+  const wrapped = value.match(/^(.*)<([^>]+)>\s*$/);
+  if (wrapped) {
+    const email = wrapped[2].trim();
+    const name = wrapped[1].trim().replace(/^"|"$/g, "") || "AMU Pulse";
+    return email.includes("@") ? { name, email } : null;
+  }
+  const email = value.trim();
+  return email.includes("@") ? { name: "AMU Pulse", email } : null;
+}
 
-  const from = process.env.CLAIM_NOTIFY_FROM || "AMU Pulse <onboarding@resend.dev>";
+/** Emails claim details through Brevo. Skips quietly when mail is not configured. */
+export async function sendClaimNotice(notice: ClaimNotice): Promise<boolean> {
+  const to = process.env.CLAIM_NOTIFY_EMAIL?.trim();
+  const key = process.env.BREVO_API_KEY?.trim();
+  const sender = senderAddress(process.env.CLAIM_NOTIFY_FROM?.trim() || "");
+  if (!to || !key || !sender) return false;
+
   const profileUrl = absoluteUrl(`/candidates/${notice.slug}`);
   const reviewUrl = absoluteUrl("/admin/dashboard");
   const text = [
@@ -38,17 +49,18 @@ export async function sendClaimNotice(notice: ClaimNotice): Promise<boolean> {
     `Review: ${reviewUrl}`,
   ].join("\n");
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
+      "api-key": key,
+      accept: "application/json",
+      "content-type": "application/json",
     },
     body: JSON.stringify({
-      from,
-      to: [to],
+      sender,
+      to: [{ email: to }],
       subject: `Profile claim: ${notice.candidateName}`,
-      text,
+      textContent: text,
     }),
   });
 
