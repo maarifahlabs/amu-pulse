@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Claim a candidate profile",
-  description: "Find your candidate profile and submit verification so you can publish your bio, manifesto and answers.",
+  description: "AMUSU election candidates can find their AMU Pulse profile and submit verification before editing their bio, manifesto and answers.",
 };
 
 function matches(candidate: Candidate, position: Position | undefined, query: string) {

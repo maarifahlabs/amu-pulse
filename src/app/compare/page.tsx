@@ -6,8 +6,8 @@ import { findAnswer, getDataset } from "@/lib/data";
 import { absoluteUrl } from "@/lib/env";
 
 export const metadata: Metadata = {
-  title: "Compare candidates",
-  description: "Compare candidates' published answers to campus issues side by side, presented equally.",
+  title: "Compare AMUSU election candidates",
+  description: "Compare AMU Students' Union (AMUSU) election 2026 candidates side by side. AMU Pulse presents their published answers equally.",
 };
 
 // `candidates=a,b` is the shareable form; `pick=a&pick=b` comes from the checkbox form.

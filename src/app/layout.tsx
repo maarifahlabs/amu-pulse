@@ -11,12 +11,21 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(`${absoluteUrl("/")}/`),
   title: {
-    default: "AMU Pulse — Your Campus. Your Questions. Your Choice.",
+    default: "AMU Pulse — AMUSU election 2026",
     template: "%s · AMU Pulse",
   },
   description:
-    "An independent, nonpartisan space for AMU students to explore campus issues, question candidates and compare their published responses.",
-  openGraph: { type: "website", siteName: "AMU Pulse" },
+    "AMU Pulse is an independent guide to the AMU Students' Union (AMUSU) election 2026. Compare candidates, read their answers, and check the published dates.",
+  applicationName: "AMU Pulse",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "AMU Pulse",
+    locale: "en_IN",
+    url: "/",
+  },
+  twitter: { card: "summary_large_image" },
+  robots: { index: true, follow: true },
 };
 
 export const viewport: Viewport = {

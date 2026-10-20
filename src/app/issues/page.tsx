@@ -4,8 +4,8 @@ import { IssueCard } from "@/components/IssueCard";
 import { filterIssues, getDataset, issueCategories, issueResponseCount } from "@/lib/data";
 
 export const metadata: Metadata = {
-  title: "Campus issues",
-  description: "Explore the issues affecting AMU campus life and read every candidate's published response.",
+  title: "AMUSU election issues",
+  description: "Campus issues in the AMU Students' Union (AMUSU) election 2026, with every candidate's published response on AMU Pulse.",
 };
 
 export default async function IssuesPage({ searchParams }: { searchParams: Promise<{ category?: string; q?: string }> }) {

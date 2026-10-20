@@ -1,10 +1,25 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Countdown } from "@/components/Countdown";
 import { ElectionTimeline } from "@/components/ElectionTimeline";
 import { CandidateCard } from "@/components/CandidateCard";
 import { IssueCard } from "@/components/IssueCard";
 import { completeness, getDataset, getTrending, issueResponseCount, pollingEvent } from "@/lib/data";
+import { absoluteUrl } from "@/lib/env";
 import { formatDate } from "@/lib/format";
+
+export const metadata: Metadata = {
+  title: { absolute: "AMU Pulse — AMUSU election 2026 candidates, issues and dates" },
+  description:
+    "Search AMU Pulse for the AMUSU election 2026. See who is contesting the AMU Students' Union, compare their answers, and follow the published election dates.",
+  alternates: { canonical: absoluteUrl("/") },
+  openGraph: {
+    title: "AMU Pulse — AMUSU election 2026",
+    description:
+      "Independent guide to the AMU Students' Union election: candidates, campus issues, and the published 2026 schedule.",
+    url: absoluteUrl("/"),
+  },
+};
 
 export const revalidate = 120;
 
@@ -26,18 +41,42 @@ export default async function HomePage() {
     : ds.candidates.slice(0, 5).map((candidate) => ({ candidate, views: null as number | null }));
   const top = ranked.slice(0, 5);
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        name: "AMU Pulse",
+        alternateName: ["AMUSU election", "AMU Students' Union election", "AMUSU election 2026"],
+        url: absoluteUrl("/"),
+        description:
+          "Independent guide to the AMU Students' Union (AMUSU) election 2026, with candidates, campus issues and published dates.",
+        inLanguage: "en-IN",
+      },
+      {
+        "@type": "WebPage",
+        name: "AMU Pulse — AMUSU election 2026",
+        url: absoluteUrl("/"),
+        isPartOf: { "@type": "WebSite", name: "AMU Pulse", url: absoluteUrl("/") },
+        about: { "@type": "Event", name: "AMU Students' Union election 2026", startDate: "2026-11-05", eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode", location: { "@type": "Place", name: "Aligarh Muslim University", address: "Aligarh, Uttar Pradesh, India" } },
+      },
+    ],
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <section className="bg-gradient-to-br from-brand-700 to-brand-900 text-white">
         <div className="container-page grid gap-8 py-12 sm:py-16 md:grid-cols-[1.4fr_1fr] md:items-center">
           <div className="space-y-5">
-            <p className="text-sm font-semibold uppercase tracking-widest text-brand-100">AMU Students&apos; Union Election 2026</p>
+            <p className="text-sm font-semibold uppercase tracking-widest text-brand-100">AMU Students&apos; Union (AMUSU) election 2026</p>
             <h1 className="text-3xl font-bold leading-tight sm:text-5xl">
-              Your Campus. Your Questions. Your Choice.
+              AMU Pulse
+              <span className="mt-2 block text-2xl font-semibold sm:text-4xl">Your Campus. Your Questions. Your Choice.</span>
             </h1>
             <p className="max-w-xl text-brand-50">
-              Don&apos;t just know who is contesting. Know what they stand for. A neutral space to explore issues,
-              question candidates and make informed decisions.
+              AMU Pulse is an independent guide to the AMUSU election. Don&apos;t just know who is contesting.
+              Know what they stand for, compare their answers, and check the published dates.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/issues" className="btn-primary bg-white text-brand-900 hover:bg-brand-50">Explore issues</Link>

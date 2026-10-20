@@ -5,8 +5,8 @@ import { getDataset } from "@/lib/data";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Election guide",
-  description: "Key dates, positions and how to use AMU Pulse for the Students' Union election.",
+  title: "AMUSU election 2026 dates",
+  description: "Published dates for the AMU Students' Union (AMUSU) election 2026, from voter lists through polling on 5 November.",
 };
 
 export default async function ElectionGuidePage() {

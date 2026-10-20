@@ -6,8 +6,8 @@ import { completeness, filterCandidates, getDataset } from "@/lib/data";
 import type { Candidate, Position } from "@/lib/types";
 
 export const metadata: Metadata = {
-  title: "Candidates",
-  description: "Verified candidates for the AMU Students' Union election, listed by position in official ballot order.",
+  title: "AMUSU election candidates 2026",
+  description: "Candidates contesting the AMU Students' Union (AMUSU) election 2026, listed by post in ballot order on AMU Pulse.",
 };
 
 export default async function CandidatesPage({ searchParams }: { searchParams: Promise<{ position?: string; q?: string }> }) {
