@@ -24,9 +24,10 @@ export const metadata: Metadata = {
 export const revalidate = 120;
 
 const STEPS = [
-  { title: "Discover", text: "Browse the campus issues students care about and who is contesting." },
-  { title: "Question", text: "Read candidates' published responses and submit your own questions." },
-  { title: "Compare", text: "See every candidate's answer side by side, presented equally." },
+  { title: "Discover", text: "Browse the campus issues students care about and who is contesting.", href: "/candidates" },
+  { title: "Question", text: "Read candidates' published responses and submit your own questions.", href: "/issues" },
+  { title: "Compare", text: "See every candidate's answer side by side, presented equally.", href: "/compare" },
+  { title: "Vote", text: "Choose one candidate for each post, or up to 10 for Cabinet Member.", href: "/vote" },
 ];
 
 export default async function HomePage() {
@@ -95,13 +96,13 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="container-page grid gap-4 py-10 sm:grid-cols-3">
+      <section className="container-page grid gap-4 py-10 sm:grid-cols-2 lg:grid-cols-4">
         {STEPS.map((step, i) => (
-          <div key={step.title} className="card">
+          <Link key={step.title} href={step.href} className="card block transition hover:border-brand-600">
             <p className="text-sm font-bold text-brand-600">0{i + 1}</p>
             <h2 className="text-lg font-semibold">{step.title}</h2>
             <p className="text-sm text-slate-600">{step.text}</p>
-          </div>
+          </Link>
         ))}
       </section>
 

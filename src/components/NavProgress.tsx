@@ -32,7 +32,7 @@ export function NavProgress() {
     };
     const onSubmit = (event: SubmitEvent) => {
       const form = event.target;
-      if (!(form instanceof HTMLFormElement) || form.target === "_blank") return;
+      if (!(form instanceof HTMLFormElement) || form.target === "_blank" || form.dataset.voteGate === "closed") return;
       setActive(true);
     };
     document.addEventListener("click", onClick, true);

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { joinedField } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { votingOpen } from "@/lib/voting";
 
 export async function YourVotes({ profileId }: { profileId: string }) {
   const { data, error } = await createAdminClient()
@@ -30,16 +29,12 @@ export async function YourVotes({ profileId }: { profileId: string }) {
     <section id="votes" className="card scroll-mt-20 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-bold">Your votes</h2>
-        {votingOpen() && <Link href="/vote" className="btn-secondary">Update vote</Link>}
+        <Link href="/vote" className="btn-secondary">{votes.length ? "Update vote" : "Vote"}</Link>
       </div>
       {error ? (
         <p className="text-sm text-slate-600">Your votes will show here after the voting list is turned on.</p>
       ) : votes.length === 0 ? (
-        <p className="text-sm text-slate-600">
-          {votingOpen()
-            ? "You have not chosen any candidates yet."
-            : "Voting opens after the final list on 27 October 2026 at 4 pm. Your choices will show here, and you can change them later."}
-        </p>
+        <p className="text-sm text-slate-600">You have not chosen any candidates yet.</p>
       ) : (
         <ul className="divide-y divide-slate-100">
           {votes.map((vote) => (

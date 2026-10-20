@@ -6,7 +6,7 @@ import { requireViewer } from "@/lib/auth";
 import { getDataset } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { VOTING_CLOSED_MESSAGE, voteLimit, votingOpen } from "@/lib/voting";
+import { voteLimit } from "@/lib/voting";
 
 export const metadata: Metadata = { title: "Vote", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -25,9 +25,7 @@ export default async function VotePage({ searchParams }: { searchParams: SearchP
         </p>
       </header>
       <FlashMessage ok={ok} error={error} />
-      {!votingOpen() ? (
-        <p className="card text-sm font-medium text-brand-800">{VOTING_CLOSED_MESSAGE}</p>
-      ) : !isSupabaseConfigured ? (
+      {!isSupabaseConfigured ? (
         <p className="card text-sm">Voting needs Supabase to be configured.</p>
       ) : (
         <Ballot />

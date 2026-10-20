@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { saveVote } from "@/actions/votes";
 import { SubmitButton } from "@/components/SubmitButton";
+import { VOTING_CLOSED_MESSAGE, votingOpen } from "@/lib/voting";
 
 export interface BallotOption {
   id: string;
@@ -42,7 +43,16 @@ export function BallotForm({ groups, selected }: { groups: BallotGroup[]; select
   }
 
   return (
-    <form action={saveVote} className="space-y-4">
+    <form
+      action={saveVote}
+      className="space-y-4"
+      data-vote-gate={votingOpen() ? "open" : "closed"}
+      onSubmit={(event) => {
+        if (votingOpen()) return;
+        event.preventDefault();
+        window.alert(VOTING_CLOSED_MESSAGE);
+      }}
+    >
       {chosen.map((id) => (
         <input key={id} type="hidden" name="candidateId" value={id} />
       ))}
