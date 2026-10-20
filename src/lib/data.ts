@@ -49,7 +49,7 @@ export const getDataset = cache(unstable_cache(async (): Promise<Dataset> => {
     answers: (answers.data ?? []) as CandidateAnswer[],
     events: events.data?.length ? (events.data as ElectionEvent[]) : electionSchedule,
   };
-}, ["public-dataset"], { revalidate: 120 }));
+}, ["public-dataset"], { revalidate: 120, tags: ["public-dataset"] }));
 
 export interface TrendingRow {
   slug: string;

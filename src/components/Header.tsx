@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AccountMenu } from "@/components/AccountMenu";
+import { VoteLink } from "@/components/VoteLink";
 
 const NAV = [
   { href: "/issues", label: "Issues" },
@@ -24,6 +25,7 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
+            <VoteLink className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100" />
           </nav>
           <AccountMenu />
         </div>
@@ -34,6 +36,7 @@ export function Header() {
             {item.label}
           </Link>
         ))}
+        <VoteLink className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100" />
       </nav>
     </header>
   );

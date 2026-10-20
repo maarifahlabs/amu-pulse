@@ -6,12 +6,14 @@ import { ClaimSteps } from "@/components/ClaimSteps";
 import { FlashMessage } from "@/components/FlashMessage";
 import { ProfileViews } from "@/components/ProfileViews";
 import { StatusBadge } from "@/components/StatusBadge";
+import { SubmitButton } from "@/components/SubmitButton";
+import { YourVotes } from "@/components/YourVotes";
 import { requireViewer } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 import { joinedField } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export const metadata: Metadata = { title: "Candidate dashboard", robots: { index: false } };
+export const metadata: Metadata = { title: "Your account", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 type SearchParams = Promise<{ ok?: string; error?: string }>;
@@ -39,7 +41,7 @@ export default async function CandidateDashboard({ searchParams }: { searchParam
     <div className="container-page space-y-6 py-8">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Candidate dashboard</h1>
+          <h1 className="text-2xl font-bold">Your account</h1>
           <p className="text-sm text-slate-600">Signed in as {viewer.email}</p>
         </div>
         <div className="flex gap-2">
@@ -48,10 +50,11 @@ export default async function CandidateDashboard({ searchParams }: { searchParam
         </div>
       </header>
       <FlashMessage ok={ok} error={error} />
+      <YourVotes profileId={viewer.id} />
       {candidate ? (
         <>
           <ClaimSteps current={5} />
-          <p className="text-sm font-medium text-brand-800">Profile claimed successfully. You can publish your bio, manifesto and answers below. Each one is reviewed before it appears publicly.</p>
+          <p className="text-sm font-medium text-brand-800">Profile claimed successfully. Bio and manifesto updates go live when you submit them. Answers are still reviewed before they are published.</p>
           <LinkedCandidate candidate={candidate} />
         </>
       ) : (
@@ -146,13 +149,13 @@ async function LinkedCandidate({ candidate }: { candidate: LinkedCandidateRow })
         <form action={submitProfileUpdate} className="space-y-3">
           <div>
             <label htmlFor="bio" className="label">Bio</label>
-            <textarea id="bio" name="bio" required minLength={20} maxLength={2000} rows={5} className="input" defaultValue={candidate.bio_pending ?? candidate.bio ?? ""} />
+            <textarea id="bio" name="bio" required minLength={20} maxLength={2000} rows={5} className="input" defaultValue={candidate.bio ?? candidate.bio_pending ?? ""} />
           </div>
           <div>
             <label htmlFor="photo" className="label">Photo (JPEG, PNG or WebP, max 2 MB)</label>
             <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="text-sm" />
           </div>
-          <button className="btn-primary">Submit for review</button>
+          <SubmitButton className="btn-primary" pendingLabel="Saving…">Submit</SubmitButton>
         </form>
       </section>
 
@@ -167,7 +170,7 @@ async function LinkedCandidate({ candidate }: { candidate: LinkedCandidateRow })
             <label htmlFor="m-source" className="label">Source link (optional, e.g. a PDF of your printed manifesto)</label>
             <input id="m-source" name="sourceUrl" type="url" className="input" defaultValue={manifesto?.source_url ?? ""} />
           </div>
-          <button className="btn-primary">Submit for review</button>
+          <SubmitButton className="btn-primary" pendingLabel="Saving…">Submit</SubmitButton>
         </form>
       </section>
 

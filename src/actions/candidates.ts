@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { audit, requireViewer } from "@/lib/auth";
 import { joinedField, messageHref } from "@/lib/format";
@@ -26,7 +27,7 @@ async function requireLinkedCandidate() {
   const viewer = await requireViewer(DASHBOARD);
   const { data: candidate } = await createAdminClient()
     .from("candidates")
-    .select("id, verification_status")
+    .select("id, slug, verification_status")
     .eq("profile_id", viewer.id)
     .maybeSingle();
   if (!candidate) fail("Your account is not linked to a candidate profile yet.");
@@ -115,15 +116,17 @@ export async function submitProfileUpdate(formData: FormData) {
   const { error } = await db
     .from("candidates")
     .update({
-      bio_pending: parsed.data.bio,
-      ...(photoPendingUrl ? { photo_pending_url: photoPendingUrl } : {}),
-      profile_update_status: "pending",
+      bio: parsed.data.bio,
+      bio_pending: null,
+      ...(photoPendingUrl ? { photo_url: photoPendingUrl, photo_pending_url: null } : {}),
+      profile_update_status: null,
     })
     .eq("id", candidate.id);
-  if (error) fail("Could not save your profile update.");
+  if (error) fail("Could not save your profile.");
 
+  revalidateTag("public-dataset", { expire: 0 });
   await audit(viewer.id, "profile.submit", "candidate", candidate.id, { photo: Boolean(photoPendingUrl) });
-  done("Profile update submitted for review.");
+  done("Bio saved.");
 }
 
 export async function submitManifesto(formData: FormData) {
@@ -132,17 +135,31 @@ export async function submitManifesto(formData: FormData) {
   if (!parsed.success) fail(firstError(parsed.error));
 
   const db = createAdminClient();
-  // Only one pending manifesto at a time: replace any earlier pending draft.
-  await db.from("manifestos").delete().eq("candidate_id", candidate.id).eq("status", "pending");
-  const { data, error } = await db
+  const now = new Date().toISOString();
+  const row = {
+    content: parsed.data.content,
+    source_url: parsed.data.sourceUrl,
+    status: "published" as const,
+    submitted_at: now,
+    published_at: now,
+  };
+  const { data: latest } = await db
     .from("manifestos")
-    .insert({ candidate_id: candidate.id, content: parsed.data.content, source_url: parsed.data.sourceUrl })
     .select("id")
-    .single();
-  if (error) fail("Could not submit your manifesto.");
+    .eq("candidate_id", candidate.id)
+    .order("submitted_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-  await audit(viewer.id, "manifesto.submit", "manifesto", data.id);
-  done("Manifesto submitted for review.");
+  const saved = latest
+    ? await db.from("manifestos").update(row).eq("id", latest.id).select("id").single()
+    : await db.from("manifestos").insert({ candidate_id: candidate.id, ...row }).select("id").single();
+  if (saved.error || !saved.data) fail("Could not save your manifesto.");
+
+  await db.from("manifestos").delete().eq("candidate_id", candidate.id).eq("status", "pending");
+  revalidateTag("public-dataset", { expire: 0 });
+  await audit(viewer.id, "manifesto.submit", "manifesto", saved.data.id);
+  done("Manifesto saved.");
 }
 
 export async function submitAnswer(formData: FormData) {

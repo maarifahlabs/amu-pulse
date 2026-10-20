@@ -15,7 +15,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
       <header className="space-y-2">
         <h1 className="text-2xl font-bold">Log in</h1>
         <p className="text-sm text-slate-600">
-          You don&apos;t need an account to browse. Log in only to submit a question or manage a candidate profile.
+          You don&apos;t need an account to browse. Log in to vote, submit a question, or manage a candidate profile.
         </p>
       </header>
       <FlashMessage ok={ok} error={error} />
