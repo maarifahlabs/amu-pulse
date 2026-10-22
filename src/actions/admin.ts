@@ -1,12 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { audit, requireAdmin } from "@/lib/auth";
 import { messageHref } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
-  candidateSchema, candidateVerificationSchema, eventSchema, firstError, formToObject, issueSchema,
+  adminCandidateUpdateSchema, candidateSchema, candidateVerificationSchema, eventSchema, firstError, formToObject, issueSchema,
   positionSchema, reviewSchema, uuid,
 } from "@/lib/validations";
 
@@ -18,8 +18,12 @@ function fail(message: string): never {
 
 function done(message: string): never {
   revalidatePath("/", "layout");
+  revalidateTag("public-dataset", { expire: 0 });
   redirect(messageHref(DASHBOARD, "ok", message));
 }
+
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+const PHOTO_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
 function parseReview(formData: FormData) {
   const parsed = reviewSchema.safeParse(formToObject(formData));
@@ -214,6 +218,64 @@ export async function createCandidate(formData: FormData) {
 
   await audit(admin.id, "candidate.create", "candidate", data.id, { verification_status: d.verificationStatus });
   done("Candidate created.");
+}
+
+export async function updateCandidate(formData: FormData) {
+  const admin = await requireAdmin();
+  const parsed = adminCandidateUpdateSchema.safeParse(formToObject(formData));
+  if (!parsed.success) fail(firstError(parsed.error));
+  const d = parsed.data;
+  const db = createAdminClient();
+
+  let photoUrl: string | undefined;
+  const photo = formData.get("photo");
+  if (photo instanceof File && photo.size > 0) {
+    const ext = PHOTO_TYPES[photo.type];
+    if (!ext) fail("Photo must be a JPEG, PNG or WebP image.");
+    if (photo.size > MAX_PHOTO_BYTES) fail("Photo must be 2 MB or smaller.");
+    const path = `${d.id}/${Date.now()}.${ext}`;
+    const { error: uploadError } = await db.storage.from("candidate-photos").upload(path, photo, { contentType: photo.type, upsert: false });
+    if (uploadError) fail("Photo upload failed.");
+    photoUrl = db.storage.from("candidate-photos").getPublicUrl(path).data.publicUrl;
+  }
+
+  const { error } = await db
+    .from("candidates")
+    .update({
+      name: d.name,
+      slug: d.slug,
+      position_id: d.positionId,
+      department: d.department,
+      faculty: d.faculty,
+      official_source_url: d.officialSourceUrl,
+      verification_status: d.verificationStatus,
+      bio: d.bio,
+      bio_pending: null,
+      ballot_number: d.ballotNumber,
+      profile_update_status: null,
+      ...(photoUrl ? { photo_url: photoUrl, photo_pending_url: null } : {}),
+    })
+    .eq("id", d.id);
+  if (error) fail(error.code === "23505" ? "That slug or serial number is already used." : "Could not update the candidate.");
+
+  if (d.manifesto) {
+    const now = new Date().toISOString();
+    const row = { content: d.manifesto, status: "published" as const, submitted_at: now, published_at: now };
+    const { data: latest } = await db
+      .from("manifestos")
+      .select("id")
+      .eq("candidate_id", d.id)
+      .order("submitted_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const saved = latest
+      ? await db.from("manifestos").update(row).eq("id", latest.id)
+      : await db.from("manifestos").insert({ candidate_id: d.id, ...row });
+    if (saved.error) fail("Profile saved, but the manifesto could not be updated.");
+  }
+
+  await audit(admin.id, "candidate.update", "candidate", d.id, { photo: Boolean(photoUrl) });
+  done("Candidate profile updated.");
 }
 
 export async function setCandidateVerification(formData: FormData) {

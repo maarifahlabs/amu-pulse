@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 
 export function SubmitButton({
@@ -7,7 +8,7 @@ export function SubmitButton({
   pendingLabel,
   className,
 }: {
-  children: string;
+  children: ReactNode;
   pendingLabel: string;
   className?: string;
 }) {

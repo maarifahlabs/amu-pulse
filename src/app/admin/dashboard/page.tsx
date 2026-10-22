@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   createCandidate, createEvent, createPosition, moderateQuestion, reviewAnswer, reviewClaim, reviewManifesto,
-  reviewProfileUpdate, saveIssue, setCandidateVerification, setEventVerified,
+  reviewProfileUpdate, saveIssue, updateCandidate, setEventVerified,
 } from "@/actions/admin";
 import { signOut } from "@/actions/auth";
 import { FlashMessage } from "@/components/FlashMessage";
@@ -51,7 +51,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: S
   const admin = await requireAdmin();
   const db = createAdminClient();
 
-  const [claims, profileUpdates, manifestos, answers, questions, events, issues, candidates, positions, logs] = await Promise.all([
+  const [claims, profileUpdates, manifestos, answers, questions, events, issues, candidates, positions, logs, manifestoRows] = await Promise.all([
     db.from("candidate_claims").select("id, evidence, created_at, candidate_id, candidates(name), profiles!candidate_claims_profile_id_fkey(display_name)").eq("status", "pending").order("created_at"),
     db.from("candidates").select("id, name, bio_pending, photo_pending_url").eq("profile_update_status", "pending"),
     db.from("manifestos").select("id, content, source_url, submitted_at, candidates(name)").eq("status", "pending").order("submitted_at"),
@@ -59,10 +59,15 @@ export default async function AdminDashboard({ searchParams }: { searchParams: S
     db.from("questions").select("id, question, created_at, issues(title)").eq("moderation_status", "pending").order("created_at"),
     db.from("election_events").select("id, title, kind, starts_at, source_url, verified_at").order("starts_at"),
     db.from("issues").select("id, slug, title, description, context, category, status").order("created_at", { ascending: false }),
-    db.from("candidates").select("id, name, slug, verification_status, profile_id, positions(title)").order("name"),
+    db.from("candidates").select("id, name, slug, bio, photo_url, department, faculty, ballot_number, official_source_url, verification_status, profile_id, position_id, positions(title)").order("name"),
     db.from("positions").select("id, title, slug").order("sort_order"),
     db.from("audit_logs").select("id, action, entity_type, created_at, profiles(display_name)").order("created_at", { ascending: false }).limit(40),
+    db.from("manifestos").select("candidate_id, content, submitted_at").order("submitted_at", { ascending: false }),
   ]);
+  const manifestoByCandidate = new Map<string, string>();
+  for (const row of manifestoRows.data ?? []) {
+    if (!manifestoByCandidate.has(row.candidate_id)) manifestoByCandidate.set(row.candidate_id, row.content);
+  }
 
   return (
     <div className="container-page space-y-6 py-8">
@@ -193,20 +198,41 @@ export default async function AdminDashboard({ searchParams }: { searchParams: S
       <Section title="Candidates" count={candidates.data?.length}>
         <ul className="space-y-2">
           {(candidates.data ?? []).map((c) => (
-            <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
-              <span>
-                <Link href={`/candidates/${c.slug}`} className="font-semibold hover:underline">{c.name}</Link> ·{" "}
-                {joinedField(c.positions, "title")} · {c.profile_id ? "claimed" : "unclaimed"}
-              </span>
-              <form action={setCandidateVerification} className="flex gap-2">
-                <input type="hidden" name="id" value={c.id} />
-                <select name="verificationStatus" defaultValue={c.verification_status} className="input py-1.5" aria-label={`Verification for ${c.name}`}>
-                  <option value="unverified">Unverified</option>
-                  <option value="verified">Verified (on official list)</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-                <button className="btn-secondary px-3 py-1.5">Save</button>
-              </form>
+            <li key={c.id} className="border-b border-slate-100 pb-3 last:border-0">
+              <details>
+                <summary className="cursor-pointer text-sm">
+                  <Link href={`/candidates/${c.slug}`} className="font-semibold hover:underline">{c.name}</Link>
+                  {" · "}{joinedField(c.positions, "title")} · {c.profile_id ? "claimed" : "unclaimed"} <StatusBadge status={c.verification_status} />
+                </summary>
+                <form action={updateCandidate} className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <input type="hidden" name="id" value={c.id} />
+                  {c.photo_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={c.photo_url} alt="" className="h-20 w-20 rounded-full object-cover" />
+                  )}
+                  <label className="text-sm sm:col-span-2">
+                    Profile photo (JPEG, PNG or WebP, max 2 MB)
+                    <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="mt-1 block text-sm" />
+                  </label>
+                  <input name="name" required defaultValue={c.name} className="input" aria-label="Name" />
+                  <input name="slug" required defaultValue={c.slug} pattern="[a-z0-9]+(-[a-z0-9]+)*" className="input" aria-label="Slug" />
+                  <select name="positionId" required defaultValue={c.position_id} className="input" aria-label="Post">
+                    {(positions.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+                  </select>
+                  <input name="ballotNumber" type="number" min={1} max={999} defaultValue={c.ballot_number ?? ""} placeholder="Serial number" className="input" aria-label="Serial number" />
+                  <input name="department" defaultValue={c.department ?? ""} placeholder="Department" className="input" aria-label="Department" />
+                  <input name="faculty" defaultValue={c.faculty ?? ""} placeholder="Faculty" className="input" aria-label="Faculty" />
+                  <select name="verificationStatus" defaultValue={c.verification_status} className="input" aria-label="Verification">
+                    <option value="unverified">Unverified</option>
+                    <option value="verified">Verified (on official list)</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                  <input name="officialSourceUrl" type="url" defaultValue={c.official_source_url ?? ""} placeholder="Official list URL" className="input" aria-label="Official source URL" />
+                  <textarea name="bio" defaultValue={c.bio ?? ""} placeholder="Bio" rows={4} className="input sm:col-span-2" aria-label="Bio" />
+                  <textarea name="manifesto" defaultValue={manifestoByCandidate.get(c.id) ?? ""} placeholder="Manifesto" rows={5} className="input sm:col-span-2" aria-label="Manifesto" />
+                  <button className="btn-primary sm:col-span-2">Save profile</button>
+                </form>
+              </details>
             </li>
           ))}
         </ul>

@@ -131,6 +131,19 @@ export const candidateVerificationSchema = z.object({
   verificationStatus: z.enum(["unverified", "verified", "rejected"]),
 });
 
+export const adminCandidateUpdateSchema = candidateSchema.extend({
+  id: uuid,
+  bio: z.string().trim().max(2000).transform((value) => value || null),
+  ballotNumber: z.string().trim().superRefine((value, ctx) => {
+    if (!value) return;
+    const n = Number(value);
+    if (!Number.isInteger(n) || n < 1 || n > 999) {
+      ctx.addIssue({ code: "custom", message: "Ballot number must be from 1 to 999." });
+    }
+  }).transform((value) => (value ? Number(value) : null)),
+  manifesto: z.string().trim().max(10000),
+});
+
 export const eventSchema = z.object({
   title: z.string().trim().min(3).max(200),
   description: optionalText(1000),
