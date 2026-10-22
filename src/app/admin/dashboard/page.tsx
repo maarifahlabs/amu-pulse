@@ -211,7 +211,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: S
                     <img src={c.photo_url} alt="" className="h-20 w-20 rounded-full object-cover" />
                   )}
                   <label className="text-sm sm:col-span-2">
-                    Profile photo (JPEG, PNG or WebP, max 2 MB)
+                    Profile photo (JPEG, PNG or WebP, max 5 MB)
                     <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="mt-1 block text-sm" />
                   </label>
                   <input name="name" required defaultValue={c.name} className="input" aria-label="Name" />
@@ -249,6 +249,10 @@ export default async function AdminDashboard({ searchParams }: { searchParams: S
           <input name="department" placeholder="Department" className="input" aria-label="Department" />
           <input name="faculty" placeholder="Faculty" className="input" aria-label="Faculty" />
           <input name="officialSourceUrl" type="url" placeholder="Official list URL" className="input sm:col-span-2" aria-label="Official source URL" />
+          <label className="text-sm sm:col-span-2">
+            Profile photo (JPEG, PNG or WebP, max 5 MB)
+            <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="mt-1 block text-sm" />
+          </label>
           <button className="btn-primary sm:col-span-2">Add candidate</button>
         </form>
       </Section>

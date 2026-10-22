@@ -152,7 +152,7 @@ async function LinkedCandidate({ candidate }: { candidate: LinkedCandidateRow })
             <textarea id="bio" name="bio" required minLength={20} maxLength={2000} rows={5} className="input" defaultValue={candidate.bio ?? candidate.bio_pending ?? ""} />
           </div>
           <div>
-            <label htmlFor="photo" className="label">Photo (JPEG, PNG or WebP, max 2 MB)</label>
+            <label htmlFor="photo" className="label">Photo (JPEG, PNG or WebP, max 5 MB)</label>
             <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="text-sm" />
           </div>
           <SubmitButton className="btn-primary" pendingLabel="Saving…">Submit</SubmitButton>

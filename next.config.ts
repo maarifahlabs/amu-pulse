@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   ...(basePath ? { basePath } : {}),
   experimental: {
     serverActions: {
-      bodySizeLimit: "3mb",
+      bodySizeLimit: "6mb",
     },
   },
   async rewrites() {

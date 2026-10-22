@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { audit, requireViewer } from "@/lib/auth";
 import { joinedField, messageHref } from "@/lib/format";
 import { sendClaimNotice } from "@/lib/mail";
+import { uploadCandidatePhoto } from "@/lib/photos";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   answerSchema, claimSchema, createProfileSchema, firstError, formToObject, manifestoSchema, profileUpdateSchema, slugify,
@@ -13,8 +14,6 @@ import {
 const DASHBOARD = "/candidate/dashboard";
 const CLAIM = "/claim";
 const CREATE = "/create";
-const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
-const PHOTO_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
 function fail(message: string): never {
   redirect(messageHref(DASHBOARD, "error", message));
@@ -82,6 +81,16 @@ export async function createCandidateProfile(formData: FormData) {
     .select("id")
     .single();
   if (error || !data) createFail("Could not create your profile.");
+
+  try {
+    const photoUrl = await uploadCandidatePhoto(db, data.id, formData.get("photo"));
+    if (photoUrl) {
+      const { error: photoError } = await db.from("candidates").update({ photo_url: photoUrl }).eq("id", data.id);
+      if (photoError) createFail("Your profile was created, but the photo could not be saved. Add it from your account.");
+    }
+  } catch (err) {
+    createFail(err instanceof Error ? err.message : "Your profile was created, but the photo could not be saved.");
+  }
 
   if (viewer.role === "student") {
     await db.from("profiles").update({ role: "candidate", display_name: parsed.data.name }).eq("id", viewer.id);
@@ -158,19 +167,11 @@ export async function submitProfileUpdate(formData: FormData) {
   if (!parsed.success) fail(firstError(parsed.error));
 
   const db = createAdminClient();
-  let photoPendingUrl: string | undefined;
-  const photo = formData.get("photo");
-  if (photo instanceof File && photo.size > 0) {
-    const ext = PHOTO_TYPES[photo.type];
-    if (!ext) fail("Photo must be a JPEG, PNG or WebP image.");
-    if (photo.size > MAX_PHOTO_BYTES) fail("Photo must be 2 MB or smaller.");
-
-    const path = `${candidate.id}/${Date.now()}.${ext}`;
-    const { error: uploadError } = await db.storage
-      .from("candidate-photos")
-      .upload(path, photo, { contentType: photo.type, upsert: false });
-    if (uploadError) fail("Photo upload failed.");
-    photoPendingUrl = db.storage.from("candidate-photos").getPublicUrl(path).data.publicUrl;
+  let photoPendingUrl: string | null = null;
+  try {
+    photoPendingUrl = await uploadCandidatePhoto(db, candidate.id, formData.get("photo"));
+  } catch (err) {
+    fail(err instanceof Error ? err.message : "Photo upload failed.");
   }
 
   const { error } = await db

@@ -64,6 +64,10 @@ export default async function CreateProfilePage({ searchParams }: { searchParams
             <label htmlFor="bio" className="label">Bio</label>
             <textarea id="bio" name="bio" required minLength={20} maxLength={2000} rows={5} className="input" />
           </div>
+          <div>
+            <label htmlFor="photo" className="label">Profile photo (JPEG, PNG or WebP, max 5 MB)</label>
+            <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="text-sm" />
+          </div>
           <SubmitButton className="btn-primary" pendingLabel="Creating…">Create profile</SubmitButton>
         </form>
       )}
