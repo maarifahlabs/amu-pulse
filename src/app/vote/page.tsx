@@ -21,7 +21,7 @@ export default async function VotePage({ searchParams }: { searchParams: SearchP
       <header className="space-y-2">
         <h1 className="text-2xl font-bold">Vote</h1>
         <p className="text-sm text-slate-600">
-          Choose one candidate for each post. For Cabinet Member you can choose up to 10. You can change your vote later, and it stays on your account. This is your selection on AMU Pulse. The official vote is still cast in person on 5 November.
+          Submit each post on its own. Choose one candidate for a post, or up to 10 for Cabinet Member, then press Submit on that post. You can change any post later. This is your selection on AMU Pulse. The official vote is still cast in person on 5 November.
         </p>
       </header>
       <FlashMessage ok={ok} error={error} />
