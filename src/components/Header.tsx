@@ -6,7 +6,7 @@ const NAV = [
   { href: "/candidates", label: "Candidates" },
   { href: "/compare", label: "Compare" },
   { href: "/election-guide", label: "Election guide" },
-  { href: "/claim", label: "Create profile" },
+  { href: "/create", label: "Create profile" },
 ];
 
 function VoteNow() {

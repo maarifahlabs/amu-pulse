@@ -1,7 +1,8 @@
 "use server";
 
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { isSupabaseConfigured } from "@/lib/env";
+import { isSupabaseConfigured, SITE_URL } from "@/lib/env";
 import { messageHref } from "@/lib/format";
 import { createSessionClient } from "@/lib/supabase/server";
 import { firstError, formToObject, passwordAuthSchema } from "@/lib/validations";
@@ -38,6 +39,39 @@ export async function signIn(formData: FormData) {
   const { error } = await sb.auth.signInWithPassword({ email, password });
   if (error) redirect(messageHref("/login", "error", authFailure(error.message)));
   redirect(next);
+}
+
+const AUTH_HOSTS = new Set(["amu-pulse.maarifahlabs.com", "amupulse.maarifahlabs.com", "localhost:3000"]);
+
+async function requestOrigin() {
+  const h = await headers();
+  const host = (h.get("x-forwarded-host") ?? h.get("host") ?? "").split(",")[0].trim();
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  return AUTH_HOSTS.has(host) ? `${proto}://${host}` : SITE_URL;
+}
+
+export async function signInWithGoogle(formData: FormData) {
+  if (!isSupabaseConfigured) redirect(messageHref("/login", "error", "Login is disabled in demo mode."));
+  const next = safeNext(String(formData.get("next") ?? ""));
+  const cookieStore = await cookies();
+  cookieStore.set("amu_auth_next", next, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 10,
+  });
+
+  const origin = await requestOrigin();
+  const sb = await createSessionClient();
+  const { data, error } = await sb.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: `${origin}/auth/callback` },
+  });
+  if (error || !data.url) {
+    redirect(messageHref("/login", "error", "Google sign-in is not available yet. In Supabase, enable the Google provider and allow this site's /auth/callback URL."));
+  }
+  redirect(data.url);
 }
 
 export async function signUp(formData: FormData) {

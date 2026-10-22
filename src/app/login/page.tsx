@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { signIn, signUp } from "@/actions/auth";
+import { signIn, signInWithGoogle, signUp } from "@/actions/auth";
 import { FlashMessage } from "@/components/FlashMessage";
 import { SubmitButton } from "@/components/SubmitButton";
 
@@ -19,6 +19,10 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
         </p>
       </header>
       <FlashMessage ok={ok} error={error} />
+      <form action={signInWithGoogle} className="card">
+        <input type="hidden" name="next" value={next ?? ""} />
+        <SubmitButton className="btn-secondary w-full" pendingLabel="Opening Google…">Continue with Google</SubmitButton>
+      </form>
       <form action={signIn} className="card space-y-4">
         <h2 className="font-semibold">Sign in</h2>
         <input type="hidden" name="next" value={next ?? ""} />

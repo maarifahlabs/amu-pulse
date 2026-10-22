@@ -93,9 +93,9 @@ async function ClaimSection({ viewerId }: { viewerId: string }) {
         ) : (
           <>
             <p className="text-sm text-slate-600">
-              Search the official list by your name, post, or serial number, then submit verification for the unclaimed profile.
+              Create a new profile here. If your name is already listed, open that candidate and choose Claim this profile.
             </p>
-            <Link href="/claim" className="btn-primary">Create your profile</Link>
+            <Link href="/create" className="btn-primary">Create your profile</Link>
           </>
         )}
         {unclaimed && unclaimed.length === 0 && !pending && (

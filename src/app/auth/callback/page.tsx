@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { completeMagicLink } from "@/actions/auth";
+import { AuthContinue } from "@/components/AuthContinue";
 
 export const metadata: Metadata = { title: "Confirm login", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -18,7 +18,7 @@ export default async function AuthCallbackPage({ searchParams }: { searchParams:
   const params = await searchParams;
   const stored = (await cookies()).get("amu_auth_next")?.value;
   const requested = params.next || stored;
-  const next = requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : "/candidate/dashboard";
+  const next = requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : "/";
   const ready = Boolean(params.code || params.token_hash);
 
   return (
@@ -27,7 +27,7 @@ export default async function AuthCallbackPage({ searchParams }: { searchParams:
         <h1 className="text-2xl font-bold">Confirm login</h1>
         <p className="text-sm text-slate-600">
           {ready
-            ? "Press Continue to finish signing in. The email link itself does not sign you in."
+            ? "Finishing sign-in."
             : "This login link is missing its sign-in code, or it was already used."}
         </p>
       </header>
@@ -37,13 +37,12 @@ export default async function AuthCallbackPage({ searchParams }: { searchParams:
         </p>
       )}
       {ready ? (
-        <form action={completeMagicLink} className="card">
-          <input type="hidden" name="code" value={params.code ?? ""} />
-          <input type="hidden" name="token_hash" value={params.token_hash ?? ""} />
-          <input type="hidden" name="type" value={params.type ?? "magiclink"} />
-          <input type="hidden" name="next" value={next} />
-          <button className="btn-primary w-full">Continue</button>
-        </form>
+        <AuthContinue
+          code={params.code ?? ""}
+          tokenHash={params.token_hash ?? ""}
+          type={params.type ?? "magiclink"}
+          next={next}
+        />
       ) : (
         <Link href="/login" className="btn-primary">Request a new link</Link>
       )}

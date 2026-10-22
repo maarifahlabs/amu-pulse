@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
+import { VoteCount } from "@/components/CandidateCard";
 import { CompletenessIndicator } from "@/components/CompletenessIndicator";
 import { ProfileViews } from "@/components/ProfileViews";
 import { ShareButton } from "@/components/ShareButton";
@@ -49,11 +50,11 @@ export default async function CandidatePage({ params }: Props) {
           <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">{position?.title}</p>
           <h1 className="text-2xl font-bold">{candidate.name}</h1>
           <ProfileViews slug={candidate.slug} />
-          <p className="text-sm font-semibold text-brand-800">{votes} {votes === 1 ? "vote" : "votes"}</p>
+          <VoteCount votes={votes} large />
           <p className="text-sm text-slate-600">{[candidate.department, candidate.faculty].filter(Boolean).join(" · ")}</p>
           <CompletenessIndicator data={stats} />
           {!stats.claimed && (
-            <Link href={`/claim/${candidate.slug}`} className="btn-primary">Create this profile</Link>
+            <Link href={`/claim/${candidate.slug}`} className="btn-primary">Claim this profile</Link>
           )}
           {candidate.official_source_url && (
             <a href={candidate.official_source_url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-700 underline">

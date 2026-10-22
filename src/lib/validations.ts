@@ -75,6 +75,14 @@ export const profileUpdateSchema = z.object({
   bio: z.string().trim().min(20, "Bio must be at least 20 characters").max(2000),
 });
 
+export const createProfileSchema = z.object({
+  name: z.string().trim().min(2, "Enter your name").max(120),
+  positionId: uuid,
+  bio: z.string().trim().min(20, "Bio must be at least 20 characters").max(2000),
+  department: optionalText(120),
+  faculty: optionalText(120),
+});
+
 export const manifestoSchema = z.object({
   content: z.string().trim().min(50, "Manifesto must be at least 50 characters").max(10000),
   sourceUrl: optionalUrl,

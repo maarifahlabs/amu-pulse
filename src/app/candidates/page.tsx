@@ -17,17 +17,16 @@ export default async function CandidatesPage({ searchParams }: { searchParams: P
 
   return (
     <div className="container-page space-y-6 py-8">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-2">
-          <h1 className="text-2xl font-bold sm:text-3xl">Candidates</h1>
-          <p className="text-slate-600">
-            Only candidates verified against the official list are shown, in official ballot serial order. The checklist shows what
-            each candidate has submitted. It is not a rating.
-          </p>
-        </div>
-        <Link href="/claim" className="btn-primary">Create your profile</Link>
+      <header className="space-y-2">
+        <h1 className="text-2xl font-bold sm:text-3xl">Candidates</h1>
+        <p className="text-slate-600">
+          Candidates are grouped by post. The checklist shows what each candidate has submitted. It is not a rating.
+        </p>
       </header>
 
+      <div className="flex justify-end">
+        <Link href="/create" className="btn-primary">Create your profile</Link>
+      </div>
       <CandidateFilters positions={ds.positions} position={position} q={q} />
 
       {candidates.length === 0 ? (
@@ -76,7 +75,6 @@ function CandidateGrid({
           position={positions.find((p) => p.id === c.position_id)}
           stats={completeness(ds, c)}
           votes={voteCounts[c.id] ?? 0}
-          showCreate
         />
       ))}
     </div>

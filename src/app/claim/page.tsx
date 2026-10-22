@@ -34,7 +34,7 @@ export default async function ClaimSearchPage({ searchParams }: { searchParams: 
   return (
     <div className="container-page space-y-6 py-8">
       <header className="space-y-2">
-        <h1 className="text-2xl font-bold sm:text-3xl">Create your profile</h1>
+        <h1 className="text-2xl font-bold sm:text-3xl">Claim your candidate profile</h1>
         <p className="text-slate-600">
           Students, candidates and admins use the same sign-in. Find your official profile, then submit your contact details and proof.
           Those details are emailed for review. You can edit the profile only after a moderator approves the claim.
@@ -76,7 +76,7 @@ export default async function ClaimSearchPage({ searchParams }: { searchParams: 
                 {claimed ? (
                   <span className="badge bg-slate-100 text-slate-600">Already claimed</span>
                 ) : (
-                  <Link href={`/claim/${candidate.slug}`} className="btn-primary">Create this profile</Link>
+                  <Link href={`/claim/${candidate.slug}`} className="btn-primary">Claim this profile</Link>
                 )}
               </li>
             );

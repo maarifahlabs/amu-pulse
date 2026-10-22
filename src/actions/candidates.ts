@@ -7,11 +7,12 @@ import { joinedField, messageHref } from "@/lib/format";
 import { sendClaimNotice } from "@/lib/mail";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
-  answerSchema, claimSchema, firstError, formToObject, manifestoSchema, profileUpdateSchema,
+  answerSchema, claimSchema, createProfileSchema, firstError, formToObject, manifestoSchema, profileUpdateSchema, slugify,
 } from "@/lib/validations";
 
 const DASHBOARD = "/candidate/dashboard";
 const CLAIM = "/claim";
+const CREATE = "/create";
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 const PHOTO_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
@@ -32,6 +33,65 @@ async function requireLinkedCandidate() {
     .maybeSingle();
   if (!candidate) fail("Your account is not linked to a candidate profile yet.");
   return { viewer, candidate };
+}
+
+function createFail(message: string): never {
+  redirect(messageHref(CREATE, "error", message));
+}
+
+export async function createCandidateProfile(formData: FormData) {
+  const viewer = await requireViewer(CREATE);
+  const parsed = createProfileSchema.safeParse(formToObject(formData));
+  if (!parsed.success) createFail(firstError(parsed.error));
+
+  const db = createAdminClient();
+  const { data: existing } = await db.from("candidates").select("id").eq("profile_id", viewer.id).maybeSingle();
+  if (existing) createFail("This account already has a profile. Open your account to edit it.");
+
+  const { data: pending } = await db
+    .from("candidate_claims")
+    .select("id")
+    .eq("profile_id", viewer.id)
+    .eq("status", "pending")
+    .maybeSingle();
+  if (pending) createFail("You already have a claim waiting for review. Open that candidate's page if you meant to claim an existing profile.");
+
+  const { data: position } = await db.from("positions").select("id").eq("id", parsed.data.positionId).maybeSingle();
+  if (!position) createFail("Choose a post from the list.");
+
+  const base = slugify(parsed.data.name) || "candidate";
+  let slug = base;
+  for (let i = 2; i < 30; i += 1) {
+    const { data: taken } = await db.from("candidates").select("id").eq("slug", slug).maybeSingle();
+    if (!taken) break;
+    slug = `${base}-${i}`;
+  }
+
+  const { data, error } = await db
+    .from("candidates")
+    .insert({
+      slug,
+      profile_id: viewer.id,
+      position_id: parsed.data.positionId,
+      name: parsed.data.name,
+      department: parsed.data.department,
+      faculty: parsed.data.faculty,
+      bio: parsed.data.bio,
+      verification_status: "verified",
+    })
+    .select("id")
+    .single();
+  if (error || !data) createFail("Could not create your profile.");
+
+  if (viewer.role === "student") {
+    await db.from("profiles").update({ role: "candidate", display_name: parsed.data.name }).eq("id", viewer.id);
+  } else {
+    await db.from("profiles").update({ display_name: parsed.data.name }).eq("id", viewer.id);
+  }
+
+  revalidateTag("public-dataset", { expire: 0 });
+  await audit(viewer.id, "profile.create", "candidate", data.id);
+  redirect(messageHref(DASHBOARD, "ok", "Your profile is live. You can add a photo and manifesto below."));
 }
 
 function claimFail(slug: string, message: string): never {

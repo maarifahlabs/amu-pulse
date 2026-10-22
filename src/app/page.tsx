@@ -34,10 +34,16 @@ export default async function HomePage() {
   const [ds, voteCounts] = await Promise.all([getDataset(), getVoteCounts()]);
   const polling = pollingEvent(ds);
   const featured = ds.issues.slice(0, 6);
-  const top = [...ds.candidates]
-    .sort((a, b) => (voteCounts[b.id] ?? 0) - (voteCounts[a.id] ?? 0) || a.name.localeCompare(b.name))
-    .slice(0, 5)
-    .map((candidate) => ({ candidate, votes: voteCounts[candidate.id] ?? 0 }));
+  const trending = ds.positions
+    .map((position) => ({
+      position,
+      rows: ds.candidates
+        .filter((candidate) => candidate.position_id === position.id)
+        .sort((a, b) => (voteCounts[b.id] ?? 0) - (voteCounts[a.id] ?? 0) || a.name.localeCompare(b.name))
+        .slice(0, 3)
+        .map((candidate) => ({ candidate, votes: voteCounts[candidate.id] ?? 0 })),
+    }))
+    .filter((group) => group.rows.length > 0);
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -121,23 +127,28 @@ export default async function HomePage() {
         ))}
       </section>
 
-      {top.length > 0 && (
-        <section className="container-page space-y-4 pt-2">
+      {trending.length > 0 && (
+        <section className="container-page space-y-8 pt-2">
           <div className="flex items-end justify-between">
             <h2 className="text-xl font-bold">Trending by votes</h2>
             <Link href="/candidates" className="text-sm font-semibold text-brand-700 hover:underline">View all</Link>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {top.map(({ candidate, votes }) => (
-              <CandidateCard
-                key={candidate.id}
-                candidate={candidate}
-                position={ds.positions.find((item) => item.id === candidate.position_id)}
-                stats={completeness(ds, candidate)}
-                votes={votes}
-              />
-            ))}
-          </div>
+          {trending.map(({ position, rows }) => (
+            <div key={position.id} className="space-y-3">
+              <h3 className="text-lg font-bold">{position.title}</h3>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {rows.map(({ candidate, votes }) => (
+                  <CandidateCard
+                    key={candidate.id}
+                    candidate={candidate}
+                    position={position}
+                    stats={completeness(ds, candidate)}
+                    votes={votes}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
         </section>
       )}
 
@@ -176,8 +187,8 @@ export default async function HomePage() {
             ))}
           </dl>
           <p className="text-sm text-slate-600">
-            Are you a candidate? <Link href="/claim" className="font-semibold text-brand-700 underline">Create your profile</Link>.
-            You can edit it after a moderator approves the profile.
+            Are you a candidate? <Link href="/create" className="font-semibold text-brand-700 underline">Create your profile</Link>.
+            If your name is already listed, open that page and choose Claim this profile.
           </p>
         </div>
       </section>
