@@ -8,28 +8,37 @@ export function CandidateCard({
   candidate,
   position,
   stats,
-  views,
+  votes,
+  showCreate = false,
 }: {
   candidate: Candidate;
   position: Position | undefined;
   stats: ReturnType<typeof completeness>;
-  views?: number | null;
+  votes?: number | null;
+  showCreate?: boolean;
 }) {
   return (
-    <Link href={`/candidates/${candidate.slug}`} className="card flex gap-4 transition hover:border-brand-500">
-      <Avatar name={candidate.name} photoUrl={candidate.photo_url} />
-      <div className="min-w-0 flex-1 space-y-2">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
-            {position?.title}
-            {candidate.ballot_number !== null && ` · No. ${String(candidate.ballot_number).padStart(2, "0")}`}
-          </p>
-          <h3 className="truncate text-base font-semibold">{candidate.name}</h3>
-          {candidate.department && <p className="truncate text-sm text-slate-600">{candidate.department}</p>}
+    <article className="card flex flex-col gap-3 transition hover:border-brand-500">
+      <Link href={`/candidates/${candidate.slug}`} className="flex gap-4">
+        <Avatar name={candidate.name} photoUrl={candidate.photo_url} />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
+              {position?.title}
+              {candidate.ballot_number !== null && ` · No. ${String(candidate.ballot_number).padStart(2, "0")}`}
+            </p>
+            <h3 className="truncate text-base font-semibold">{candidate.name}</h3>
+            {candidate.department && <p className="truncate text-sm text-slate-600">{candidate.department}</p>}
+          </div>
+          <CompletenessIndicator data={stats} />
+          {votes != null && (
+            <p className="text-xs font-semibold text-brand-800">{votes} {votes === 1 ? "vote" : "votes"}</p>
+          )}
         </div>
-        <CompletenessIndicator data={stats} />
-        {views != null && <p className="text-xs text-slate-500">{views} total views</p>}
-      </div>
-    </Link>
+      </Link>
+      {showCreate && candidate.profile_id == null && (
+        <Link href={`/claim/${candidate.slug}`} className="btn-primary">Create this profile</Link>
+      )}
+    </article>
   );
 }

@@ -76,7 +76,7 @@ async function ClaimSection({ viewerId }: { viewerId: string }) {
     <section className="space-y-4">
       <ClaimSteps current={pending ? 4 : 1} />
       <div className="card space-y-4">
-        <h2 className="text-lg font-bold">{pending ? "Waiting for verification" : "Claim your candidate profile"}</h2>
+        <h2 className="text-lg font-bold">{pending ? "Waiting for verification" : "Create your profile"}</h2>
         {claims && claims.length > 0 && (
           <ul className="space-y-1 text-sm">
             {claims.map((c) => (
@@ -95,7 +95,7 @@ async function ClaimSection({ viewerId }: { viewerId: string }) {
             <p className="text-sm text-slate-600">
               Search the official list by your name, post, or serial number, then submit verification for the unclaimed profile.
             </p>
-            <Link href="/claim" className="btn-primary">Find your profile</Link>
+            <Link href="/claim" className="btn-primary">Create your profile</Link>
           </>
         )}
         {unclaimed && unclaimed.length === 0 && !pending && (

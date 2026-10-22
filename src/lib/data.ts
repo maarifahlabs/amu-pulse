@@ -3,6 +3,7 @@ import { cache } from "react";
 import { electionSchedule } from "@/lib/election-schedule";
 import { isSupabaseConfigured } from "@/lib/env";
 import { sampleDataset } from "@/lib/sample-data";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createPublicClient } from "@/lib/supabase/public";
 import type {
   Candidate, CandidateAnswer, Dataset, ElectionEvent, Issue, Manifesto, Position, Question,
@@ -56,6 +57,28 @@ export interface TrendingRow {
   daily_views: number;
   total_views: number;
 }
+
+/** Public totals only. Voter identities stay on student_votes. */
+export const getVoteCounts = cache(unstable_cache(async (): Promise<Record<string, number>> => {
+  if (!isSupabaseConfigured) return {};
+  try {
+    const db = createAdminClient();
+    const counts: Record<string, number> = {};
+    const pageSize = 1000;
+    for (let from = 0; ; from += pageSize) {
+      const { data, error } = await db.from("student_votes").select("candidate_id").range(from, from + pageSize - 1);
+      if (error || !data) return counts;
+      for (const row of data) {
+        const id = row.candidate_id as string;
+        counts[id] = (counts[id] ?? 0) + 1;
+      }
+      if (data.length < pageSize) break;
+    }
+    return counts;
+  } catch {
+    return {};
+  }
+}, ["vote-counts"], { revalidate: 60, tags: ["vote-counts"] }));
 
 export const getTrending = cache(unstable_cache(async (): Promise<TrendingRow[] | null> => {
   if (!isSupabaseConfigured) return null;

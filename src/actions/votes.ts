@@ -1,10 +1,11 @@
 "use server";
 
+import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { audit, requireViewer } from "@/lib/auth";
 import { joinedField, messageHref } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { voteLimit, VOTING_CLOSED_MESSAGE, votingOpen } from "@/lib/voting";
+import { voteLimit } from "@/lib/voting";
 
 const VOTE = "/vote";
 
@@ -14,7 +15,6 @@ function fail(message: string): never {
 
 export async function saveVote(formData: FormData) {
   const viewer = await requireViewer(VOTE);
-  if (!votingOpen()) fail(VOTING_CLOSED_MESSAGE);
 
   const ids = [...new Set(formData.getAll("candidateId").filter((value): value is string => typeof value === "string" && value.length > 0))];
   if (ids.some((id) => !/^[0-9a-f-]{36}$/i.test(id))) fail("Choose candidates from the list.");
@@ -63,6 +63,7 @@ export async function saveVote(formData: FormData) {
     if (insertError) fail("Could not save your vote.");
   }
 
+  revalidateTag("vote-counts", { expire: 0 });
   await audit(viewer.id, "vote.save", "profile", viewer.id, { count: rows.length });
   redirect(`${messageHref("/candidate/dashboard", "ok", "Your vote was saved. You can change it any time.")}#votes`);
 }

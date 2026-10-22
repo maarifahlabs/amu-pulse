@@ -4,7 +4,7 @@ import { Countdown } from "@/components/Countdown";
 import { ElectionTimeline } from "@/components/ElectionTimeline";
 import { CandidateCard } from "@/components/CandidateCard";
 import { IssueCard } from "@/components/IssueCard";
-import { completeness, getDataset, getTrending, issueResponseCount, pollingEvent } from "@/lib/data";
+import { completeness, getDataset, getVoteCounts, issueResponseCount, pollingEvent } from "@/lib/data";
 import { absoluteUrl } from "@/lib/env";
 import { formatDate } from "@/lib/format";
 
@@ -31,16 +31,13 @@ const STEPS = [
 ];
 
 export default async function HomePage() {
-  const [ds, trending] = await Promise.all([getDataset(), getTrending()]);
+  const [ds, voteCounts] = await Promise.all([getDataset(), getVoteCounts()]);
   const polling = pollingEvent(ds);
   const featured = ds.issues.slice(0, 6);
-  const ranked = trending
-    ? trending.flatMap((row) => {
-        const candidate = ds.candidates.find((item) => item.slug === row.slug);
-        return candidate ? [{ candidate, views: row.total_views }] : [];
-      })
-    : ds.candidates.slice(0, 5).map((candidate) => ({ candidate, views: null as number | null }));
-  const top = ranked.slice(0, 5);
+  const top = [...ds.candidates]
+    .sort((a, b) => (voteCounts[b.id] ?? 0) - (voteCounts[a.id] ?? 0) || a.name.localeCompare(b.name))
+    .slice(0, 5)
+    .map((candidate) => ({ candidate, votes: voteCounts[candidate.id] ?? 0 }));
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -97,7 +94,25 @@ export default async function HomePage() {
       </section>
 
       <section className="container-page grid gap-4 py-10 sm:grid-cols-2 lg:grid-cols-4">
-        {STEPS.map((step, i) => (
+        {STEPS.map((step, i) => step.href === "/vote" ? (
+          <Link key={step.title} href="/vote" className="flex flex-col justify-between gap-4 rounded-2xl bg-brand-900 p-5 text-white shadow-sm transition hover:bg-brand-700">
+            <div>
+              <p className="text-sm font-bold text-[#f5c400]">0{i + 1}</p>
+              <h2 className="text-lg font-semibold">{step.title}</h2>
+              <p className="text-sm text-brand-50">{step.text}</p>
+            </div>
+            <span className="vote-now self-start">
+              <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.2">
+                <path d="M4 10.5 8 14.5 16 6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              VOTE NOW
+              <span className="vote-live">
+                <span className="vote-live-dot" />
+                LIVE
+              </span>
+            </span>
+          </Link>
+        ) : (
           <Link key={step.title} href={step.href} className="card block transition hover:border-brand-600">
             <p className="text-sm font-bold text-brand-600">0{i + 1}</p>
             <h2 className="text-lg font-semibold">{step.title}</h2>
@@ -109,17 +124,17 @@ export default async function HomePage() {
       {top.length > 0 && (
         <section className="container-page space-y-4 pt-2">
           <div className="flex items-end justify-between">
-            <h2 className="text-xl font-bold">Trending candidates</h2>
+            <h2 className="text-xl font-bold">Trending by votes</h2>
             <Link href="/candidates" className="text-sm font-semibold text-brand-700 hover:underline">View all</Link>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            {top.map(({ candidate, views }) => (
+            {top.map(({ candidate, votes }) => (
               <CandidateCard
                 key={candidate.id}
                 candidate={candidate}
                 position={ds.positions.find((item) => item.id === candidate.position_id)}
                 stats={completeness(ds, candidate)}
-                views={views}
+                votes={votes}
               />
             ))}
           </div>
@@ -161,8 +176,8 @@ export default async function HomePage() {
             ))}
           </dl>
           <p className="text-sm text-slate-600">
-            Are you a candidate? <Link href="/claim" className="font-semibold text-brand-700 underline">Claim your profile</Link>.
-            You can edit it only after a moderator approves the claim.
+            Are you a candidate? <Link href="/claim" className="font-semibold text-brand-700 underline">Create your profile</Link>.
+            You can edit it after a moderator approves the profile.
           </p>
         </div>
       </section>
