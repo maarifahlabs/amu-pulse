@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { signOut } from "@/actions/auth";
 import { submitAnswer, submitManifesto, submitProfileUpdate } from "@/actions/candidates";
 import { ClaimSteps } from "@/components/ClaimSteps";
@@ -31,12 +32,6 @@ export default async function CandidateDashboard({ searchParams }: { searchParam
   }
 
   const viewer = await requireViewer("/candidate/dashboard");
-  const db = createAdminClient();
-  const { data: candidate } = await db
-    .from("candidates")
-    .select("id, slug, name, bio, photo_url, bio_pending, profile_update_status, verification_status, positions(title)")
-    .eq("profile_id", viewer.id)
-    .maybeSingle();
 
   return (
     <div className="container-page space-y-6 py-8">
@@ -51,17 +46,31 @@ export default async function CandidateDashboard({ searchParams }: { searchParam
         </div>
       </header>
       <FlashMessage ok={ok} error={error} />
-      <YourVotes profileId={viewer.id} />
-      {candidate ? (
-        <>
-          <ClaimSteps current={5} />
-          <p className="text-sm font-medium text-brand-800">Profile claimed successfully. Bio and manifesto updates go live when you submit them. Answers are still reviewed before they are published.</p>
-          <LinkedCandidate candidate={candidate} />
-        </>
-      ) : (
-        <ClaimSection viewerId={viewer.id} />
-      )}
+      <Suspense fallback={<p className="card text-sm text-slate-600">Loading your votes…</p>}>
+        <YourVotes profileId={viewer.id} />
+      </Suspense>
+      <Suspense fallback={<p className="card text-sm text-slate-600">Loading your profile…</p>}>
+        <ProfileSection viewerId={viewer.id} />
+      </Suspense>
     </div>
+  );
+}
+
+async function ProfileSection({ viewerId }: { viewerId: string }) {
+  const { data: candidate } = await createAdminClient()
+    .from("candidates")
+    .select("id, slug, name, bio, photo_url, bio_pending, profile_update_status, verification_status, positions(title)")
+    .eq("profile_id", viewerId)
+    .maybeSingle();
+
+  if (!candidate) return <ClaimSection viewerId={viewerId} />;
+
+  return (
+    <>
+      <ClaimSteps current={5} />
+      <p className="text-sm font-medium text-brand-800">Profile claimed successfully. Bio and manifesto updates go live when you submit them. Answers are still reviewed before they are published.</p>
+      <LinkedCandidate candidate={candidate} />
+    </>
   );
 }
 

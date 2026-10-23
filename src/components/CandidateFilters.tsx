@@ -14,7 +14,7 @@ export function CandidateFilters({
   return (
     <form className="flex flex-col gap-2 sm:flex-row" role="search">
       <label htmlFor="q" className="sr-only">Search candidates</label>
-      <input id="q" name="q" defaultValue={q} placeholder="Search by name or department…" className="input" />
+      <input id="q" name="q" defaultValue={q} placeholder="Search by name or faculty…" className="input" />
       <label htmlFor="position" className="sr-only">Position</label>
       <select
         id="position"

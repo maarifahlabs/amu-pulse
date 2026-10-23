@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CandidateCard } from "@/components/CandidateCard";
 import { CandidateFilters } from "@/components/CandidateFilters";
-import { completeness, filterCandidates, getDataset, getVoteCounts } from "@/lib/data";
+import { completeness, filterCandidates, getDataset, getVoteCounts, sortByVotes } from "@/lib/data";
 import type { Candidate, Position } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "AMUSU election candidates 2026",
-  description: "Candidates contesting the AMU Students' Union (AMUSU) election 2026, listed by post in ballot order on AMU Pulse.",
+  description: "Candidates contesting the AMU Students' Union (AMUSU) election 2026, grouped by post and ordered by votes on AMU Pulse.",
 };
 
 export default async function CandidatesPage({ searchParams }: { searchParams: Promise<{ position?: string; q?: string }> }) {
@@ -20,7 +20,7 @@ export default async function CandidatesPage({ searchParams }: { searchParams: P
       <header className="space-y-2">
         <h1 className="text-2xl font-bold sm:text-3xl">Candidates</h1>
         <p className="text-slate-600">
-          Candidates are grouped by post. The checklist shows what each candidate has submitted. It is not a rating.
+          Candidates are grouped by post, with the most votes first. The checklist shows what each candidate has submitted. It is not a rating.
         </p>
       </header>
 
@@ -34,11 +34,11 @@ export default async function CandidatesPage({ searchParams }: { searchParams: P
           No candidates found. {(q || position) && <Link href="/candidates" className="text-brand-700 underline">Clear filters</Link>}
         </p>
       ) : position ? (
-        <CandidateGrid candidates={candidates} positions={ds.positions} ds={ds} voteCounts={voteCounts} />
+        <CandidateGrid candidates={sortByVotes(candidates, voteCounts)} positions={ds.positions} ds={ds} voteCounts={voteCounts} />
       ) : (
         <div className="space-y-8">
           {ds.positions.map((post) => {
-            const inPost = candidates.filter((c) => c.position_id === post.id);
+            const inPost = sortByVotes(candidates.filter((c) => c.position_id === post.id), voteCounts);
             if (inPost.length === 0) return null;
             return (
               <section key={post.id} aria-labelledby={`post-${post.id}`} className="space-y-3">

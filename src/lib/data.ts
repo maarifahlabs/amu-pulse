@@ -100,6 +100,13 @@ export function findAnswer(ds: Dataset, candidateId: string, issueId: string) {
   return ds.answers.find((a) => a.candidate_id === candidateId && a.issue_id === issueId) ?? null;
 }
 
+/** Highest vote count first. Equal counts stay alphabetical, matching the home page. */
+export function sortByVotes<T extends { id: string; name: string }>(rows: T[], voteCounts: Record<string, number>) {
+  return [...rows].sort(
+    (a, b) => (voteCounts[b.id] ?? 0) - (voteCounts[a.id] ?? 0) || a.name.localeCompare(b.name),
+  );
+}
+
 export function filterCandidates(ds: Dataset, opts: { position?: string; q?: string }) {
   const position = opts.position ? ds.positions.find((p) => p.slug === opts.position) : undefined;
   const q = opts.q?.trim().toLowerCase();

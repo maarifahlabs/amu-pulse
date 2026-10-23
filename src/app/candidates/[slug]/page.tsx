@@ -8,7 +8,7 @@ import { ProfileViews } from "@/components/ProfileViews";
 import { ShareButton } from "@/components/ShareButton";
 import { completeness, findAnswer, getDataset, getVoteCounts, latestManifesto } from "@/lib/data";
 import { absoluteUrl } from "@/lib/env";
-import { formatDate } from "@/lib/format";
+import { candidatePlace, formatDate } from "@/lib/format";
 
 export const revalidate = 60;
 
@@ -51,7 +51,7 @@ export default async function CandidatePage({ params }: Props) {
           <h1 className="text-2xl font-bold">{candidate.name}</h1>
           <ProfileViews slug={candidate.slug} />
           <VoteCount votes={votes} large />
-          <p className="text-sm text-slate-600">{[candidate.department, candidate.faculty].filter(Boolean).join(" · ")}</p>
+          {candidatePlace(candidate) && <p className="text-sm text-slate-600">{candidatePlace(candidate)}</p>}
           <CompletenessIndicator data={stats} />
           {!stats.claimed && (
             <Link href={`/claim/${candidate.slug}`} className="btn-primary">Claim this profile</Link>

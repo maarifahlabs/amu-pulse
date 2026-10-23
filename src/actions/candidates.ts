@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { audit, requireViewer } from "@/lib/auth";
 import { joinedField, messageHref } from "@/lib/format";
@@ -44,62 +45,55 @@ export async function createCandidateProfile(formData: FormData) {
   if (!parsed.success) createFail(firstError(parsed.error));
 
   const db = createAdminClient();
-  const { data: existing } = await db.from("candidates").select("id").eq("profile_id", viewer.id).maybeSingle();
+  const base = slugify(parsed.data.name) || "candidate";
+  const candidateId = crypto.randomUUID();
+  let photoUrl: string | null = null;
+  let existing: { id: string } | null = null;
+  let pending: { id: string } | null = null;
+  let position: { id: string } | null = null;
+  let taken: { slug: string }[] | null = null;
+  try {
+    [{ data: existing }, { data: pending }, { data: position }, { data: taken }, photoUrl] = await Promise.all([
+      db.from("candidates").select("id").eq("profile_id", viewer.id).maybeSingle(),
+      db.from("candidate_claims").select("id").eq("profile_id", viewer.id).eq("status", "pending").maybeSingle(),
+      db.from("positions").select("id").eq("id", parsed.data.positionId).maybeSingle(),
+      db.from("candidates").select("slug").like("slug", `${base}%`),
+      uploadCandidatePhoto(db, candidateId, formData.get("photo")),
+    ]);
+  } catch (err) {
+    createFail(err instanceof Error ? err.message : "Photo upload failed.");
+  }
   if (existing) createFail("This account already has a profile. Open your account to edit it.");
-
-  const { data: pending } = await db
-    .from("candidate_claims")
-    .select("id")
-    .eq("profile_id", viewer.id)
-    .eq("status", "pending")
-    .maybeSingle();
   if (pending) createFail("You already have a claim waiting for review. Open that candidate's page if you meant to claim an existing profile.");
-
-  const { data: position } = await db.from("positions").select("id").eq("id", parsed.data.positionId).maybeSingle();
   if (!position) createFail("Choose a post from the list.");
 
-  const base = slugify(parsed.data.name) || "candidate";
+  const used = new Set((taken ?? []).map((row) => row.slug));
   let slug = base;
-  for (let i = 2; i < 30; i += 1) {
-    const { data: taken } = await db.from("candidates").select("id").eq("slug", slug).maybeSingle();
-    if (!taken) break;
-    slug = `${base}-${i}`;
-  }
+  for (let i = 2; used.has(slug) && i < 30; i += 1) slug = `${base}-${i}`;
 
-  const { data, error } = await db
-    .from("candidates")
-    .insert({
-      slug,
-      profile_id: viewer.id,
-      position_id: parsed.data.positionId,
-      name: parsed.data.name,
-      department: parsed.data.department,
-      faculty: parsed.data.faculty,
-      bio: parsed.data.bio,
-      verification_status: "verified",
-    })
-    .select("id")
-    .single();
-  if (error || !data) createFail("Could not create your profile.");
+  const { error } = await db.from("candidates").insert({
+    id: candidateId,
+    slug,
+    profile_id: viewer.id,
+    position_id: parsed.data.positionId,
+    name: parsed.data.name,
+    department: parsed.data.department,
+    faculty: parsed.data.faculty,
+    bio: parsed.data.bio,
+    photo_url: photoUrl,
+    verification_status: "verified",
+  });
+  if (error) createFail("Could not create your profile.");
 
-  try {
-    const photoUrl = await uploadCandidatePhoto(db, data.id, formData.get("photo"));
-    if (photoUrl) {
-      const { error: photoError } = await db.from("candidates").update({ photo_url: photoUrl }).eq("id", data.id);
-      if (photoError) createFail("Your profile was created, but the photo could not be saved. Add it from your account.");
-    }
-  } catch (err) {
-    createFail(err instanceof Error ? err.message : "Your profile was created, but the photo could not be saved.");
-  }
+  await db.from("profiles").update({
+    display_name: parsed.data.name,
+    ...(viewer.role === "student" ? { role: "candidate" } : {}),
+  }).eq("id", viewer.id);
 
-  if (viewer.role === "student") {
-    await db.from("profiles").update({ role: "candidate", display_name: parsed.data.name }).eq("id", viewer.id);
-  } else {
-    await db.from("profiles").update({ display_name: parsed.data.name }).eq("id", viewer.id);
-  }
-
-  revalidateTag("public-dataset", { expire: 0 });
-  await audit(viewer.id, "profile.create", "candidate", data.id);
+  after(async () => {
+    revalidateTag("public-dataset", { expire: 0 });
+    await audit(viewer.id, "profile.create", "candidate", candidateId);
+  });
   redirect(messageHref(DASHBOARD, "ok", "Your profile is live. You can add a photo and manifesto below."));
 }
 

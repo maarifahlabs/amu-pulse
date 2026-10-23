@@ -4,7 +4,7 @@ import { Countdown } from "@/components/Countdown";
 import { ElectionTimeline } from "@/components/ElectionTimeline";
 import { CandidateCard } from "@/components/CandidateCard";
 import { IssueCard } from "@/components/IssueCard";
-import { completeness, getDataset, getVoteCounts, issueResponseCount, pollingEvent } from "@/lib/data";
+import { completeness, getDataset, getVoteCounts, issueResponseCount, pollingEvent, sortByVotes } from "@/lib/data";
 import { absoluteUrl } from "@/lib/env";
 import { formatDate } from "@/lib/format";
 
@@ -37,10 +37,10 @@ export default async function HomePage() {
   const trending = ds.positions
     .map((position) => ({
       position,
-      rows: ds.candidates
-        .filter((candidate) => candidate.position_id === position.id)
-        .sort((a, b) => (voteCounts[b.id] ?? 0) - (voteCounts[a.id] ?? 0) || a.name.localeCompare(b.name))
-        .slice(0, 3)
+      rows: sortByVotes(
+        ds.candidates.filter((candidate) => candidate.position_id === position.id),
+        voteCounts,
+      ).slice(0, 3)
         .map((candidate) => ({ candidate, votes: voteCounts[candidate.id] ?? 0 })),
     }))
     .filter((group) => group.rows.length > 0);

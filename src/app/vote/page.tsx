@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { BallotForm } from "@/components/BallotForm";
 import { FlashMessage } from "@/components/FlashMessage";
-import { requireViewer } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 import { getDataset } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -28,19 +29,22 @@ export default async function VotePage({ searchParams }: { searchParams: SearchP
       {!isSupabaseConfigured ? (
         <p className="card text-sm">Voting needs Supabase to be configured.</p>
       ) : (
-        <Ballot />
+        <Suspense fallback={<p className="card text-sm text-slate-600">Loading the ballot…</p>}>
+          <Ballot />
+        </Suspense>
       )}
     </div>
   );
 }
 
 async function Ballot() {
-  const viewer = await requireViewer("/vote");
-  const ds = await getDataset();
-  const { data } = await createAdminClient()
-    .from("student_votes")
-    .select("candidate_id")
-    .eq("profile_id", viewer.id);
+  const viewerPromise = requireUser("/vote");
+  const dsPromise = getDataset();
+  const viewer = await viewerPromise;
+  const [ds, { data }] = await Promise.all([
+    dsPromise,
+    createAdminClient().from("student_votes").select("candidate_id").eq("profile_id", viewer.id),
+  ]);
   const selected = (data ?? []).map((row) => row.candidate_id as string);
 
   const groups = ds.positions
@@ -54,7 +58,7 @@ async function Ballot() {
           id: candidate.id,
           name: candidate.name,
           serial: candidate.ballot_number == null ? "" : String(candidate.ballot_number).padStart(2, "0"),
-          faculty: candidate.faculty,
+          faculty: candidate.faculty || candidate.department,
         })),
     }))
     .filter((group) => group.options.length > 0);

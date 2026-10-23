@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/env";
 import { messageHref } from "@/lib/format";
@@ -13,10 +14,19 @@ export interface Viewer {
   role: UserRole;
 }
 
-export async function getViewer(): Promise<Viewer | null> {
+/** Verifies the session. With asymmetric signing keys this stays local; otherwise it matches getUser(). */
+const sessionIdentity = cache(async () => {
   if (!isSupabaseConfigured) return null;
   const sb = await createSessionClient();
-  const { data: { user } } = await sb.auth.getUser();
+  const { data, error } = await sb.auth.getClaims();
+  const id = data?.claims.sub;
+  if (error || !id) return null;
+  const email = data.claims.email;
+  return { id, email: typeof email === "string" ? email : null };
+});
+
+export async function getViewer(): Promise<Viewer | null> {
+  const user = await sessionIdentity();
   if (!user) return null;
 
   const { data: profile } = await createAdminClient()
@@ -27,10 +37,17 @@ export async function getViewer(): Promise<Viewer | null> {
 
   return {
     id: user.id,
-    email: user.email ?? null,
+    email: user.email,
     displayName: profile?.display_name ?? null,
     role: (profile?.role as UserRole) ?? "student",
   };
+}
+
+/** Signed-in id and email, without the extra profile lookup. */
+export async function requireUser(next: string) {
+  const user = await sessionIdentity();
+  if (!user) redirect(`/login?next=${encodeURIComponent(next)}`);
+  return user;
 }
 
 export async function requireViewer(next: string) {

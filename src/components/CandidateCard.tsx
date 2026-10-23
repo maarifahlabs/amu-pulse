@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { CompletenessIndicator } from "@/components/CompletenessIndicator";
 import type { completeness } from "@/lib/data";
+import { candidatePlace } from "@/lib/format";
 import type { Candidate, Position } from "@/lib/types";
 
 export function VoteCount({ votes, large = false }: { votes: number; large?: boolean }) {
@@ -24,6 +25,7 @@ export function CandidateCard({
   stats: ReturnType<typeof completeness>;
   votes?: number | null;
 }) {
+  const place = candidatePlace(candidate);
   return (
     <Link href={`/candidates/${candidate.slug}`} className="card flex gap-4 transition hover:border-brand-500">
       <Avatar name={candidate.name} photoUrl={candidate.photo_url} />
@@ -34,7 +36,7 @@ export function CandidateCard({
             {candidate.ballot_number !== null && ` · No. ${String(candidate.ballot_number).padStart(2, "0")}`}
           </p>
           <h3 className="truncate text-base font-semibold">{candidate.name}</h3>
-          {candidate.department && <p className="truncate text-sm text-slate-600">{candidate.department}</p>}
+          {place && <p className="truncate text-sm text-slate-600">{place}</p>}
         </div>
         <CompletenessIndicator data={stats} />
         {votes != null && <VoteCount votes={votes} />}

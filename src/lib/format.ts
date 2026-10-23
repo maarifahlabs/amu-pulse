@@ -19,6 +19,11 @@ export function initials(name: string) {
     .join("");
 }
 
+/** Faculty under a candidate name, with department only when faculty is missing. */
+export function candidatePlace(candidate: { faculty?: string | null; department?: string | null }) {
+  return candidate.faculty?.trim() || candidate.department?.trim() || "";
+}
+
 /** Reads a field from an untyped Supabase join, which may be an object or a one-element array. */
 export function joinedField(value: unknown, field: string): string {
   const row = Array.isArray(value) ? value[0] : value;

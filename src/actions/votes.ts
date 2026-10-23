@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
+import { after } from "next/server";
 import { redirect } from "next/navigation";
-import { audit, requireViewer } from "@/lib/auth";
+import { audit, requireUser } from "@/lib/auth";
 import { messageHref } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { voteLimit } from "@/lib/voting";
@@ -14,7 +15,7 @@ function fail(message: string): never {
 }
 
 export async function saveVote(formData: FormData) {
-  const viewer = await requireViewer(VOTE);
+  const viewer = await requireUser(VOTE);
   const positionId = String(formData.get("positionId") ?? "");
   if (!/^[0-9a-f-]{36}$/i.test(positionId)) fail("Choose a post from the list.");
 
@@ -22,16 +23,14 @@ export async function saveVote(formData: FormData) {
   if (ids.some((id) => !/^[0-9a-f-]{36}$/i.test(id))) fail("Choose candidates from the list.");
 
   const db = createAdminClient();
-  const { data: position } = await db.from("positions").select("id, slug, title").eq("id", positionId).maybeSingle();
+  const positionQuery = db.from("positions").select("id, slug, title").eq("id", positionId).maybeSingle();
+  const candidateQuery = ids.length === 0
+    ? Promise.resolve({ data: [] as { id: string; position_id: string }[], error: null })
+    : db.from("candidates").select("id, position_id").in("id", ids).eq("verification_status", "verified");
+  const [{ data: position }, { data, error }] = await Promise.all([positionQuery, candidateQuery]);
   if (!position) fail("Choose a post from the list.");
   const title = position.title || "this post";
   if (ids.length === 0) fail(`Choose a candidate for ${title} before submitting.`);
-
-  const { data, error } = await db
-    .from("candidates")
-    .select("id, position_id")
-    .in("id", ids)
-    .eq("verification_status", "verified");
   if (error || !data || data.length !== ids.length || data.some((row) => row.position_id !== positionId)) {
     fail("Choose candidates from this post.");
   }
@@ -58,7 +57,10 @@ export async function saveVote(formData: FormData) {
   );
   if (insertError) fail("Could not save your vote.");
 
-  revalidateTag("vote-counts", { expire: 0 });
-  await audit(viewer.id, "vote.save", "profile", viewer.id, { position_id: positionId, count: data.length });
+  const savedCount = data.length;
+  after(async () => {
+    revalidateTag("vote-counts", { expire: 0 });
+    await audit(viewer.id, "vote.save", "profile", viewer.id, { position_id: positionId, count: savedCount });
+  });
   redirect(`${messageHref(VOTE, "ok", `Your vote for ${title} was saved. You can submit each post on its own.`)}#post-${positionId}`);
 }
