@@ -6,6 +6,7 @@ import {
 } from "@/actions/admin";
 import { signOut } from "@/actions/auth";
 import { FlashMessage } from "@/components/FlashMessage";
+import { PhotoField } from "@/components/PhotoField";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireAdmin } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -210,10 +211,10 @@ export default async function AdminDashboard({ searchParams }: { searchParams: S
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={c.photo_url} alt="" className="h-20 w-20 rounded-full object-cover" />
                   )}
-                  <label className="text-sm sm:col-span-2">
-                    Profile photo (JPEG, PNG or WebP, max 5 MB)
-                    <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="mt-1 block text-sm" />
-                  </label>
+                  <div className="sm:col-span-2">
+                    <p className="mb-1 text-sm font-medium text-slate-700">Profile photo (JPEG, PNG or WebP, max 5 MB)</p>
+                    <PhotoField id={`photo-${c.id}`} />
+                  </div>
                   <input name="name" required defaultValue={c.name} className="input" aria-label="Name" />
                   <input name="slug" required defaultValue={c.slug} pattern="[a-z0-9]+(-[a-z0-9]+)*" className="input" aria-label="Slug" />
                   <select name="positionId" required defaultValue={c.position_id} className="input" aria-label="Post">
@@ -249,10 +250,10 @@ export default async function AdminDashboard({ searchParams }: { searchParams: S
           <input name="department" placeholder="Department" className="input" aria-label="Department" />
           <input name="faculty" placeholder="Faculty" className="input" aria-label="Faculty" />
           <input name="officialSourceUrl" type="url" placeholder="Official list URL" className="input sm:col-span-2" aria-label="Official source URL" />
-          <label className="text-sm sm:col-span-2">
-            Profile photo (JPEG, PNG or WebP, max 5 MB)
-            <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" className="mt-1 block text-sm" />
-          </label>
+          <div className="sm:col-span-2">
+            <p className="mb-1 text-sm font-medium text-slate-700">Profile photo (JPEG, PNG or WebP, max 5 MB)</p>
+            <PhotoField id="new-candidate-photo" />
+          </div>
           <button className="btn-primary sm:col-span-2">Add candidate</button>
         </form>
       </Section>

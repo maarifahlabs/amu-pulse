@@ -23,6 +23,37 @@ function senderAddress(value: string) {
   return email.includes("@") ? { name: "AMU Pulse", email } : null;
 }
 
+const CONTACT_INBOX = "contact@maarifahlabs.com";
+
+/** Sends a contact-form message to the Maarifah Labs inbox. */
+export async function sendContactMessage(message: { name: string; email: string; body: string }) {
+  const key = process.env.BREVO_API_KEY?.trim();
+  const sender = senderAddress(process.env.CLAIM_NOTIFY_FROM?.trim() || "");
+  if (!key || !sender) return false;
+
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": key,
+      accept: "application/json",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      sender,
+      to: [{ email: CONTACT_INBOX }],
+      replyTo: { email: message.email, name: message.name },
+      subject: `AMU Pulse contact: ${message.name}`,
+      textContent: [`From: ${message.name} <${message.email}>`, "", message.body].join("\n"),
+    }),
+  });
+
+  if (!response.ok) {
+    console.error("contact email failed", response.status);
+    return false;
+  }
+  return true;
+}
+
 /** Emails claim details through Brevo. Skips quietly when mail is not configured. */
 export async function sendClaimNotice(notice: ClaimNotice): Promise<boolean> {
   const to = process.env.CLAIM_NOTIFY_EMAIL?.trim();

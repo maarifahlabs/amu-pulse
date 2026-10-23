@@ -15,7 +15,7 @@ function sitemapUrl(path: string) {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const ds = await getDataset();
-  const staticPaths = ["", "/issues", "/candidates", "/compare", "/election-guide", "/claim"];
+  const staticPaths = ["", "/about", "/issues", "/candidates", "/compare", "/election-guide", "/contact", "/claim"];
   const now = new Date();
   return [
     ...staticPaths.map((path, index) => ({

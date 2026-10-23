@@ -7,10 +7,12 @@ export function Footer() {
         <p className="font-semibold text-slate-800">AMU Pulse is independent and nonpartisan.</p>
         <p>
           It is not affiliated with, endorsed by, or operated by Aligarh Muslim University or the AMU Students&apos; Union.
-          We do not run voting, collect voting intentions, or rank candidates. Always confirm dates and rules with the
+          A choice saved here is not the official ballot, and candidates are not ranked. Always confirm dates and rules with the
           official AMU Registrar notices.
         </p>
         <div className="flex flex-wrap gap-4 pt-2">
+          <Link href="/about" className="hover:underline">About</Link>
+          <Link href="/contact" className="hover:underline">Contact us</Link>
           <Link href="/election-guide" className="hover:underline">Election guide</Link>
           <Link href="/poster" className="hover:underline">QR poster</Link>
           <Link href="/candidate/dashboard" className="hover:underline">For candidates</Link>

@@ -51,6 +51,13 @@ export const passwordAuthSchema = z.object({
   next: z.string().optional(),
 });
 
+export const contactSchema = z.object({
+  name: z.string().trim().min(2, "Enter your name").max(80),
+  email: z.string().trim().toLowerCase().email("Enter a valid email address"),
+  message: z.string().trim().min(10, "Write at least 10 characters").max(2000),
+  website: z.string().max(0, "Spam detected").optional().default(""),
+});
+
 export const questionSchema = z.object({
   issueId: uuid,
   question: z.string().trim().min(10, "Please write at least 10 characters").max(500),

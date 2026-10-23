@@ -51,11 +51,15 @@ function PostBallot({ group, selected }: { group: BallotGroup; selected: string[
       {picked.map((id) => (
         <input key={id} type="hidden" name="candidateId" value={id} />
       ))}
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-bold">{group.title}</h2>
-        <span className="text-xs font-medium text-slate-500">
-          {group.limit === 1 ? "Choose 1" : `${picked.length} of ${group.limit} selected`}
-        </span>
+        {group.options.some((option) => selected.includes(option.id)) ? (
+          <span className="rounded-full bg-brand-600 px-3 py-1 text-sm font-bold text-white">Voted ✅</span>
+        ) : (
+          <span className="text-xs font-medium text-slate-500">
+            {group.limit === 1 ? "Choose 1" : `${picked.length} of ${group.limit} selected`}
+          </span>
+        )}
       </div>
       <div className="space-y-2">
         {group.options.map((option) => {
