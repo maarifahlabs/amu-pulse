@@ -19,6 +19,13 @@ const nextConfig: NextConfig = {
       ],
     };
   },
+  async redirects() {
+    const hasHyphenHost = [{ type: "host" as const, value: "amu-pulse.maarifahlabs.com" }];
+    return [
+      { source: "/", has: hasHyphenHost, destination: "https://amupulse.maarifahlabs.com", permanent: true },
+      { source: "/:path*", has: hasHyphenHost, destination: "https://amupulse.maarifahlabs.com/:path*", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

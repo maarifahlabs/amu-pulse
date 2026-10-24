@@ -6,6 +6,7 @@ import {
 } from "@/actions/admin";
 import { signOut } from "@/actions/auth";
 import { FlashMessage } from "@/components/FlashMessage";
+import { NameWithBadge } from "@/components/NameWithBadge";
 import { PhotoField } from "@/components/PhotoField";
 import { StatusBadge } from "@/components/StatusBadge";
 import { requireAdmin } from "@/lib/auth";
@@ -53,10 +54,10 @@ export default async function AdminDashboard({ searchParams }: { searchParams: S
   const db = createAdminClient();
 
   const [claims, profileUpdates, manifestos, answers, questions, events, issues, candidates, positions, logs, manifestoRows] = await Promise.all([
-    db.from("candidate_claims").select("id, evidence, created_at, candidate_id, candidates(name), profiles!candidate_claims_profile_id_fkey(display_name)").eq("status", "pending").order("created_at"),
-    db.from("candidates").select("id, name, bio_pending, photo_pending_url").eq("profile_update_status", "pending"),
-    db.from("manifestos").select("id, content, source_url, submitted_at, candidates(name)").eq("status", "pending").order("submitted_at"),
-    db.from("candidate_answers").select("id, answer, source_url, updated_at, candidates(name), issues(title)").eq("status", "pending").order("updated_at"),
+    db.from("candidate_claims").select("id, evidence, created_at, candidate_id, candidates(id, name, profile_id), profiles!candidate_claims_profile_id_fkey(display_name)").eq("status", "pending").order("created_at"),
+    db.from("candidates").select("id, name, profile_id, bio_pending, photo_pending_url").eq("profile_update_status", "pending"),
+    db.from("manifestos").select("id, content, source_url, submitted_at, candidates(id, name, profile_id)").eq("status", "pending").order("submitted_at"),
+    db.from("candidate_answers").select("id, answer, source_url, updated_at, candidates(id, name, profile_id), issues(title)").eq("status", "pending").order("updated_at"),
     db.from("questions").select("id, question, created_at, issues(title)").eq("moderation_status", "pending").order("created_at"),
     db.from("election_events").select("id, title, kind, starts_at, source_url, verified_at").order("starts_at"),
     db.from("issues").select("id, slug, title, description, context, category, status").order("created_at", { ascending: false }),
@@ -88,7 +89,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: S
             <div key={c.id} className="space-y-2 border-b border-slate-100 pb-3 last:border-0">
               <p className="text-sm">
                 <strong>{joinedField(c.profiles, "display_name") || "Unknown user"}</strong> claims{" "}
-                <strong>{joinedField(c.candidates, "name")}</strong>
+                <CandidateLabel candidate={c.candidates} />
               </p>
               <p className="whitespace-pre-line rounded-lg bg-slate-50 p-2 text-sm">{c.evidence}</p>
               {duplicates > 1 && (
@@ -106,7 +107,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: S
       <Section title="Profile updates" count={profileUpdates.data?.length}>
         {profileUpdates.data?.length ? profileUpdates.data.map((c) => (
           <div key={c.id} className="space-y-2 border-b border-slate-100 pb-3 last:border-0">
-            <p className="font-semibold">{c.name}</p>
+            <p className="font-semibold"><NameWithBadge id={c.id} name={c.name} claimed={c.profile_id !== null} /></p>
             {c.photo_pending_url && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={c.photo_pending_url} alt={`Submitted photo of ${c.name}`} className="h-24 w-24 rounded-full object-cover" />
@@ -120,7 +121,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: S
       <Section title="Manifestos" count={manifestos.data?.length}>
         {manifestos.data?.length ? manifestos.data.map((m) => (
           <details key={m.id} className="border-b border-slate-100 pb-3 last:border-0">
-            <summary className="cursor-pointer font-semibold">{joinedField(m.candidates, "name")}</summary>
+            <summary className="cursor-pointer font-semibold"><CandidateLabel candidate={m.candidates} /></summary>
             <p className="prose-text my-2 text-sm">{m.content}</p>
             {m.source_url && <a href={m.source_url} target="_blank" rel="noopener noreferrer" className="text-xs underline">Source</a>}
             <ReviewButtons id={m.id} action={reviewManifesto} approveLabel="Publish" />
@@ -131,7 +132,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: S
       <Section title="Issue answers" count={answers.data?.length}>
         {answers.data?.length ? answers.data.map((a) => (
           <div key={a.id} className="space-y-2 border-b border-slate-100 pb-3 last:border-0">
-            <p className="text-sm"><strong>{joinedField(a.candidates, "name")}</strong> on “{joinedField(a.issues, "title")}”</p>
+            <p className="text-sm"><strong><CandidateLabel candidate={a.candidates} /></strong> on “{joinedField(a.issues, "title")}”</p>
             <p className="prose-text text-sm">{a.answer}</p>
             {a.source_url && <a href={a.source_url} target="_blank" rel="noopener noreferrer" className="text-xs underline">Source</a>}
             <ReviewButtons id={a.id} action={reviewAnswer} approveLabel="Publish" />
@@ -202,7 +203,9 @@ export default async function AdminDashboard({ searchParams }: { searchParams: S
             <li key={c.id} className="border-b border-slate-100 pb-3 last:border-0">
               <details>
                 <summary className="cursor-pointer text-sm">
-                  <Link href={`/candidates/${c.slug}`} className="font-semibold hover:underline">{c.name}</Link>
+                  <Link href={`/candidates/${c.slug}`} className="font-semibold hover:underline">
+                    <NameWithBadge id={c.id} name={c.name} claimed={c.profile_id !== null} />
+                  </Link>
                   {" · "}{joinedField(c.positions, "title")} · {c.profile_id ? "claimed" : "unclaimed"} <StatusBadge status={c.verification_status} />
                 </summary>
                 <form action={updateCandidate} className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -309,4 +312,12 @@ function IssueForm({ issue }: { issue?: IssueRow }) {
       <button className="btn-primary">Save issue</button>
     </form>
   );
+}
+
+function CandidateLabel({ candidate }: { candidate: unknown }) {
+  const row = Array.isArray(candidate) ? candidate[0] : candidate;
+  if (!row || typeof row !== "object") return "Candidate";
+  const record = row as { id?: string; name?: string; profile_id?: string | null };
+  if (!record.id || !record.name) return record.name || "Candidate";
+  return <NameWithBadge id={record.id} name={record.name} claimed={record.profile_id != null} />;
 }

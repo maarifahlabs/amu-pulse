@@ -6,7 +6,7 @@ import { submitAnswer, submitManifesto, submitProfileUpdate } from "@/actions/ca
 import { ClaimSteps } from "@/components/ClaimSteps";
 import { FlashMessage } from "@/components/FlashMessage";
 import { PhotoField } from "@/components/PhotoField";
-import { ProfileViews } from "@/components/ProfileViews";
+import { NameWithBadge } from "@/components/NameWithBadge";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SubmitButton } from "@/components/SubmitButton";
 import { YourVotes } from "@/components/YourVotes";
@@ -68,7 +68,7 @@ async function ProfileSection({ viewerId }: { viewerId: string }) {
   return (
     <>
       <ClaimSteps current={5} />
-      <p className="text-sm font-medium text-brand-800">Profile claimed successfully. Bio and manifesto updates go live when you submit them. Answers are still reviewed before they are published.</p>
+      <p className="text-sm font-medium text-brand-800">Profile claimed successfully. Bio, manifesto, and answers go live when you submit them.</p>
       <LinkedCandidate candidate={candidate} />
     </>
   );
@@ -142,8 +142,7 @@ async function LinkedCandidate({ candidate }: { candidate: LinkedCandidateRow })
     <>
       <section className="card flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-lg font-bold">{candidate.name}</p>
-          <ProfileViews slug={candidate.slug} record={false} />
+          <p className="text-lg font-bold"><NameWithBadge id={candidate.id} name={candidate.name} claimed /></p>
           <p className="text-sm text-slate-600">
             Listing: <StatusBadge status={candidate.verification_status} /> · {answeredCount}/{issues?.length ?? 0} answers published
           </p>
@@ -187,8 +186,7 @@ async function LinkedCandidate({ candidate }: { candidate: LinkedCandidateRow })
       <section className="space-y-3">
         <h2 className="text-lg font-bold">Answer campus issues</h2>
         <p className="text-sm text-slate-600">
-          Every candidate receives the same issues. Editing an answer sends it back for review, so the old version stays
-          hidden until the new one is approved.
+          Every candidate receives the same issues. Submitting an answer publishes it immediately.
         </p>
         {(issues ?? []).map((issue) => {
           const existing = answerByIssue.get(issue.id);

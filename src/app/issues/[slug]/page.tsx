@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
+import { NameWithBadge } from "@/components/NameWithBadge";
 import { QuestionForm } from "@/components/QuestionForm";
 import { ShareButton } from "@/components/ShareButton";
 import { getApprovedQuestions, getDataset, issueResponseCount, issueResponsesByPosition } from "@/lib/data";
 import { absoluteUrl } from "@/lib/env";
 import { formatDate } from "@/lib/format";
 
-export const revalidate = 60;
+export const revalidate = 1800;
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -84,7 +85,9 @@ export default async function IssuePage({ params }: Props) {
                 <div className="flex items-center gap-3">
                   <Avatar name={candidate.name} photoUrl={candidate.photo_url} size={40} />
                   <div className="flex-1">
-                    <Link href={`/candidates/${candidate.slug}`} className="font-semibold hover:underline">{candidate.name}</Link>
+                    <Link href={`/candidates/${candidate.slug}`} prefetch={false} className="font-semibold hover:underline">
+                      <NameWithBadge id={candidate.id} name={candidate.name} claimed={candidate.profile_id !== null} />
+                    </Link>
                   </div>
                   <span className={`badge ${answer ? "bg-brand-50 text-brand-700" : "bg-slate-100 text-slate-500"}`}>
                     {answer ? "Responded" : "Awaiting response"}

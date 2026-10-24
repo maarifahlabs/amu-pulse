@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { submitClaim } from "@/actions/candidates";
 import { ClaimSteps } from "@/components/ClaimSteps";
+import { NameWithBadge } from "@/components/NameWithBadge";
 import { FlashMessage } from "@/components/FlashMessage";
 import { SubmitButton } from "@/components/SubmitButton";
 import { getViewer } from "@/lib/auth";
@@ -31,7 +32,9 @@ export default async function ClaimProfilePage({ params, searchParams }: Props) 
           {position?.title}
           {candidate.ballot_number != null && ` · No. ${String(candidate.ballot_number).padStart(2, "0")}`}
         </p>
-        <h1 className="text-2xl font-bold">{candidate.name}</h1>
+        <h1 className="text-2xl font-bold">
+          <NameWithBadge id={candidate.id} name={candidate.name} claimed={candidate.profile_id !== null} />
+        </h1>
       </header>
       <ClaimSteps current={3} />
       <FlashMessage error={error} />

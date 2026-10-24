@@ -59,6 +59,7 @@ async function Ballot() {
           name: candidate.name,
           serial: candidate.ballot_number == null ? "" : String(candidate.ballot_number).padStart(2, "0"),
           faculty: candidate.faculty || candidate.department,
+          claimed: candidate.profile_id !== null,
         })),
     }))
     .filter((group) => group.options.length > 0);

@@ -231,7 +231,6 @@ export async function submitAnswer(formData: FormData) {
     .maybeSingle();
   if (!issue) fail("This issue is not open for answers.");
 
-  // Edits return to moderation; the previous version is kept in the audit log.
   const { data: previous } = await db
     .from("candidate_answers")
     .select("answer, status")
@@ -247,7 +246,7 @@ export async function submitAnswer(formData: FormData) {
         issue_id: issue.id,
         answer: parsed.data.answer,
         source_url: parsed.data.sourceUrl,
-        status: "pending",
+        status: "published",
       },
       { onConflict: "candidate_id,issue_id" },
     )
@@ -255,9 +254,10 @@ export async function submitAnswer(formData: FormData) {
     .single();
   if (error) fail("Could not submit your answer.");
 
+  revalidateTag("public-dataset", { expire: 0 });
   await audit(viewer.id, previous ? "answer.edit" : "answer.submit", "candidate_answer", data.id, {
     issue_id: issue.id,
     previous: previous ?? null,
   });
-  done("Answer submitted for review.");
+  done("Answer published.");
 }

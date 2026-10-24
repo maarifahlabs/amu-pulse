@@ -104,6 +104,31 @@
   animation: live-blink 1.1s ease-in-out infinite;
 }
 
+.site-marquee {
+  overflow: hidden;
+}
+.site-marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 4rem;
+  padding: 0.45rem 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  animation: amu-marquee 22s linear infinite;
+}
+.site-marquee-track p {
+  margin: 0;
+  white-space: nowrap;
+}
+.site-marquee:hover .site-marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes amu-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-50% - 2rem)); }
+}
+
 @keyframes live-blink {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.2; transform: scale(0.7); }

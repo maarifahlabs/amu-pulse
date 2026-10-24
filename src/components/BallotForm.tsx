@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { saveVote } from "@/actions/votes";
+import { NameWithBadge } from "@/components/NameWithBadge";
 import { SubmitButton } from "@/components/SubmitButton";
 
 export interface BallotOption {
@@ -9,6 +10,7 @@ export interface BallotOption {
   name: string;
   serial: string;
   faculty: string | null;
+  claimed: boolean;
 }
 
 export interface BallotGroup {
@@ -74,7 +76,7 @@ function PostBallot({ group, selected }: { group: BallotGroup; selected: string[
                 className="h-4 w-4 accent-brand-600"
               />
               <span className="min-w-0">
-                <span className="block font-medium">{option.name}</span>
+                <NameWithBadge id={option.id} name={option.name} claimed={option.claimed} className="font-medium" />
                 <span className="block text-xs text-slate-500">
                   {option.serial ? `Serial ${option.serial}` : "Serial not allotted yet"}
                   {option.faculty ? ` · ${option.faculty}` : ""}

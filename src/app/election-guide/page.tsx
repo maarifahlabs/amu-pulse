@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ElectionTimeline } from "@/components/ElectionTimeline";
 import { getDataset } from "@/lib/data";
 
-export const revalidate = 60;
+export const revalidate = 1800;
 
 export const metadata: Metadata = {
   title: "AMUSU election 2026 dates",

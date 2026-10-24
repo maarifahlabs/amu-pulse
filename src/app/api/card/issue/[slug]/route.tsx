@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import { getDataset, issueResponseCount } from "@/lib/data";
 import { absoluteUrl } from "@/lib/env";
 
-export const revalidate = 300;
+export const revalidate = 1800;
 
 /** Neutral 1200x630 share card for WhatsApp, social previews and downloads. */
 export async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {

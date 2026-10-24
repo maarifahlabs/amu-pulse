@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { NameWithBadge } from "@/components/NameWithBadge";
 import { joinedField } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function YourVotes({ profileId }: { profileId: string }) {
   const { data, error } = await createAdminClient()
     .from("student_votes")
-    .select("candidate_id, candidates(name, slug, ballot_number, positions(title, sort_order))")
+    .select("candidate_id, candidates(name, slug, ballot_number, profile_id, positions(title, sort_order))")
     .eq("profile_id", profileId);
 
   const votes = (data ?? [])
@@ -17,6 +18,7 @@ export async function YourVotes({ profileId }: { profileId: string }) {
         id: row.candidate_id as string,
         name: candidate.name as string,
         slug: candidate.slug as string,
+        claimed: Boolean(candidate.profile_id),
         serial,
         post: joinedField(candidate.positions, "title") || "Candidate",
         order: joinedNumber(candidate.positions, "sort_order"),
@@ -41,7 +43,9 @@ export async function YourVotes({ profileId }: { profileId: string }) {
             <li key={vote.id} className="flex items-baseline justify-between gap-3 py-2 text-sm">
               <span>
                 <span className="block text-xs font-medium uppercase tracking-wide text-slate-500">{vote.post}</span>
-                <Link href={`/candidates/${vote.slug}`} className="font-semibold hover:underline">{vote.name}</Link>
+                <Link href={`/candidates/${vote.slug}`} prefetch={false} className="font-semibold hover:underline">
+                  <NameWithBadge id={vote.id} name={vote.name} claimed={vote.claimed} />
+                </Link>
               </span>
               {vote.serial && <span className="shrink-0 text-slate-500">Serial {vote.serial}</span>}
             </li>

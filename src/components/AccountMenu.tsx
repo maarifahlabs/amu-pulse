@@ -17,6 +17,11 @@ export function AccountMenu() {
   const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const signedIn = document.cookie.split(";").some((part) => (part.trim().split("=")[0] ?? "").includes("auth-token"));
+    if (!signedIn) {
+      setSession({ signedIn: false });
+      return;
+    }
     const controller = new AbortController();
     fetch("/api/session", { signal: controller.signal, cache: "no-store" })
       .then((response) => (response.ok ? response.json() : { signedIn: false }))

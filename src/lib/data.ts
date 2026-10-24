@@ -58,8 +58,7 @@ export interface TrendingRow {
   total_views: number;
 }
 
-/** Public totals only. Voter identities stay on student_votes. */
-export const getVoteCounts = cache(unstable_cache(async (): Promise<Record<string, number>> => {
+async function loadVoteCounts(): Promise<Record<string, number>> {
   if (!isSupabaseConfigured) return {};
   try {
     const db = createAdminClient();
@@ -78,7 +77,21 @@ export const getVoteCounts = cache(unstable_cache(async (): Promise<Record<strin
   } catch {
     return {};
   }
-}, ["vote-counts"], { revalidate: 60, tags: ["vote-counts"] }));
+}
+
+/** Fresh totals for the small vote-count response. Tagged so a new vote refreshes only that response. */
+export const getVoteCounts = cache(unstable_cache(
+  loadVoteCounts,
+  ["vote-counts"],
+  { revalidate: 60, tags: ["vote-counts"] },
+));
+
+/** Totals baked into cached pages. Not tagged, so a vote does not force every page to be downloaded again. */
+export const getVoteCountSnapshot = cache(unstable_cache(
+  loadVoteCounts,
+  ["vote-count-snapshot"],
+  { revalidate: 1800 },
+));
 
 export const getTrending = cache(unstable_cache(async (): Promise<TrendingRow[] | null> => {
   if (!isSupabaseConfigured) return null;

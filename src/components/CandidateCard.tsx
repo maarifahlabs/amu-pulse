@@ -1,18 +1,14 @@
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { CompletenessIndicator } from "@/components/CompletenessIndicator";
+import { LiveVoteCount } from "@/components/VoteCounts";
+import { NameWithBadge } from "@/components/NameWithBadge";
+import { VoteCount } from "@/components/VoteCount";
 import type { completeness } from "@/lib/data";
 import { candidatePlace } from "@/lib/format";
 import type { Candidate, Position } from "@/lib/types";
 
-export function VoteCount({ votes, large = false }: { votes: number; large?: boolean }) {
-  return (
-    <span className={`inline-flex items-center gap-2 rounded-full bg-[#f5c400] text-slate-950 shadow-sm ${large ? "px-4 py-2" : "px-3 py-1.5"}`}>
-      <span className={`font-extrabold leading-none ${large ? "text-3xl" : "text-xl"}`}>{votes}</span>
-      <span className="text-xs font-bold uppercase tracking-wide">{votes === 1 ? "vote" : "votes"}</span>
-    </span>
-  );
-}
+export { VoteCount };
 
 export function CandidateCard({
   candidate,
@@ -26,8 +22,18 @@ export function CandidateCard({
   votes?: number | null;
 }) {
   const place = candidatePlace(candidate);
+  const search = `${candidate.name} ${candidate.faculty ?? ""} ${candidate.department ?? ""}`.toLowerCase();
   return (
-    <Link href={`/candidates/${candidate.slug}`} className="card flex gap-4 transition hover:border-brand-500">
+    <Link
+      href={`/candidates/${candidate.slug}`}
+      prefetch={false}
+      data-candidate=""
+      data-id={candidate.id}
+      data-name={candidate.name}
+      data-position={position?.slug ?? ""}
+      data-search={search}
+      className="card flex gap-4 transition hover:border-brand-500"
+    >
       <Avatar name={candidate.name} photoUrl={candidate.photo_url} />
       <div className="min-w-0 flex-1 space-y-2">
         <div>
@@ -35,11 +41,13 @@ export function CandidateCard({
             {position?.title}
             {candidate.ballot_number !== null && ` · No. ${String(candidate.ballot_number).padStart(2, "0")}`}
           </p>
-          <h3 className="truncate text-base font-semibold">{candidate.name}</h3>
+          <h3 className="text-base font-semibold">
+            <NameWithBadge id={candidate.id} name={candidate.name} claimed={candidate.profile_id !== null} initialVotes={votes ?? 0} truncate />
+          </h3>
           {place && <p className="truncate text-sm text-slate-600">{place}</p>}
         </div>
         <CompletenessIndicator data={stats} />
-        {votes != null && <VoteCount votes={votes} />}
+        {votes != null && <LiveVoteCount id={candidate.id} initial={votes} />}
       </div>
     </Link>
   );

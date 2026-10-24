@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Footer } from "@/components/Footer";
+import { VoteCountsProvider } from "@/components/VoteCounts";
 import { QueryMessage } from "@/components/QueryMessage";
 import { Header } from "@/components/Header";
 import { NavProgress } from "@/components/NavProgress";
@@ -49,9 +50,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense>
           <QueryMessage />
         </Suspense>
-        <main id="main" className="flex-1 pb-16">
-          {children}
-        </main>
+        <VoteCountsProvider>
+          <main id="main" className="flex-1 pb-16">
+            {children}
+          </main>
+        </VoteCountsProvider>
         <Footer />
       </body>
     </html>

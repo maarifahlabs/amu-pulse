@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClaimSteps } from "@/components/ClaimSteps";
+import { NameWithBadge } from "@/components/NameWithBadge";
 import { FlashMessage } from "@/components/FlashMessage";
 import { getDataset } from "@/lib/data";
 import type { Candidate, Position } from "@/lib/types";
@@ -71,7 +72,9 @@ export default async function ClaimSearchPage({ searchParams }: { searchParams: 
                     {position?.title}
                     {candidate.ballot_number != null && ` · No. ${String(candidate.ballot_number).padStart(2, "0")}`}
                   </p>
-                  <p className="font-semibold">{candidate.name}</p>
+                  <p className="font-semibold">
+                    <NameWithBadge id={candidate.id} name={candidate.name} claimed={claimed} />
+                  </p>
                 </div>
                 {claimed ? (
                   <span className="badge bg-slate-100 text-slate-600">Already claimed</span>

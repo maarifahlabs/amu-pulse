@@ -2,15 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
-import { VoteCount } from "@/components/CandidateCard";
 import { CompletenessIndicator } from "@/components/CompletenessIndicator";
-import { ProfileViews } from "@/components/ProfileViews";
+import { LiveVoteCount } from "@/components/VoteCounts";
+import { NameWithBadge } from "@/components/NameWithBadge";
 import { ShareButton } from "@/components/ShareButton";
-import { completeness, findAnswer, getDataset, getVoteCounts, latestManifesto } from "@/lib/data";
+import { completeness, findAnswer, getDataset, getVoteCountSnapshot, latestManifesto } from "@/lib/data";
 import { absoluteUrl } from "@/lib/env";
 import { candidatePlace, formatDate } from "@/lib/format";
 
-export const revalidate = 60;
+export const revalidate = 1800;
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -40,7 +40,7 @@ export default async function CandidatePage({ params }: Props) {
   const position = ds.positions.find((p) => p.id === candidate.position_id);
   const manifesto = latestManifesto(ds, candidate.id);
   const stats = completeness(ds, candidate);
-  const votes = (await getVoteCounts())[candidate.id] ?? 0;
+  const votes = (await getVoteCountSnapshot())[candidate.id] ?? 0;
 
   return (
     <article className="container-page space-y-8 py-8">
@@ -48,9 +48,10 @@ export default async function CandidatePage({ params }: Props) {
         <Avatar name={candidate.name} photoUrl={candidate.photo_url} size={96} />
         <div className="flex-1 space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">{position?.title}</p>
-          <h1 className="text-2xl font-bold">{candidate.name}</h1>
-          <ProfileViews slug={candidate.slug} />
-          <VoteCount votes={votes} large />
+          <h1 className="text-2xl font-bold">
+            <NameWithBadge id={candidate.id} name={candidate.name} claimed={candidate.profile_id !== null} initialVotes={votes} />
+          </h1>
+          <LiveVoteCount id={candidate.id} initial={votes} large />
           {candidatePlace(candidate) && <p className="text-sm text-slate-600">{candidatePlace(candidate)}</p>}
           <CompletenessIndicator data={stats} />
           {!stats.claimed && (

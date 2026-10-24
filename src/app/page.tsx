@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 120;
+export const revalidate = 1800;
 
 const STEPS = [
   { title: "Discover", text: "Browse the campus issues students care about and who is contesting.", href: "/candidates" },
