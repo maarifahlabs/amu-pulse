@@ -83,7 +83,9 @@ function PostBallot({
     try {
       let saved = false;
 
-      // 1. Try local dev voting endpoint first (runs seamlessly in dev without database changes)
+      let failureReason = "";
+
+      // 1. Try local dev / Vercel serverless voting endpoint first
       try {
         const devRes = await fetch("/api/vote", {
           method: "POST",
@@ -97,12 +99,13 @@ function PostBallot({
         if (devRes.ok) {
           const json = await devRes.json();
           if (json.success) saved = true;
+          else if (json.error) failureReason = json.error;
         }
       } catch {
-        // Dev endpoint not available (e.g. production static CDN)
+        // Endpoint not available (e.g. production static CDN)
       }
 
-      // 2. Direct client delete + insert fallback (for production with RLS)
+      // 2. Direct client delete + insert fallback (for client-side SPA with RLS)
       if (!saved) {
         const { error: deleteError } = await supabase
           .from("student_votes")
@@ -110,7 +113,9 @@ function PostBallot({
           .eq("profile_id", user.id)
           .eq("position_id", group.id);
 
-        if (!deleteError) {
+        if (deleteError) {
+          failureReason = deleteError.message;
+        } else {
           const { error: insertError } = await supabase
             .from("student_votes")
             .insert(
@@ -121,7 +126,11 @@ function PostBallot({
               }))
             );
 
-          if (!insertError) saved = true;
+          if (insertError) {
+            failureReason = insertError.message;
+          } else {
+            saved = true;
+          }
         }
       }
 
@@ -134,7 +143,9 @@ function PostBallot({
       } else {
         setMessage({
           type: "error",
-          text: "Could not save vote. If running in production, please execute the 3-line SQL permission in Supabase.",
+          text: failureReason
+            ? `Could not save vote (${failureReason}). Please execute the 3-line SQL permission in Supabase SQL editor.`
+            : "Could not save vote. If running in production, please execute the 3-line SQL permission in Supabase.",
         });
       }
     } catch (err) {
