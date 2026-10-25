@@ -81,6 +81,35 @@ function PostBallot({
     setMessage(null);
 
     try {
+      // 1. Direct standard Supabase delete + insert (same dynamic behavior as Next.js)
+      const { error: deleteError } = await supabase
+        .from("student_votes")
+        .delete()
+        .eq("profile_id", user.id)
+        .eq("position_id", group.id);
+
+      if (!deleteError) {
+        const { error: insertError } = await supabase
+          .from("student_votes")
+          .insert(
+            picked.map((id) => ({
+              profile_id: user.id,
+              candidate_id: id,
+              position_id: group.id,
+            }))
+          );
+
+        if (!insertError) {
+          setMessage({ type: "ok", text: `Your vote for ${group.title} has been saved!` });
+          for (const cid of picked) {
+            incrementVoteCount(cid);
+          }
+          if (onVoteSaved) onVoteSaved();
+          return;
+        }
+      }
+
+      // 2. Fallback to RPC if direct insert is blocked by database permissions
       const { data, error } = await supabase.rpc("submit_student_vote", {
         p_position_id: group.id,
         p_candidate_ids: picked,
@@ -90,7 +119,7 @@ function PostBallot({
         setMessage({
           type: "error",
           text: error.message.includes("does not exist")
-            ? "Database function submit_student_vote is not created yet. Please execute the SQL in Supabase."
+            ? "Please run the 3-line SQL permission in Supabase to enable voting."
             : error.message,
         });
       } else if (data && !data.success) {
