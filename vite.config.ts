@@ -90,8 +90,11 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+  const isVercel = Boolean(process.env.VERCEL);
+  const base = env.VITE_BASE_PATH ?? (isVercel ? "/" : process.env.GITHUB_ACTIONS ? "/amu-pulse/" : "/");
+
   return {
-    base: env.VITE_BASE_PATH ?? (process.env.NODE_ENV === "production" ? "/amu-pulse/" : "/"),
+    base,
     plugins: [
       react(),
       tailwindcss(),
