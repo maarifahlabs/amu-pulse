@@ -1,24 +1,26 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 
 export function AuthCallbackPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const next = searchParams.get("next") || "/";
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/");
+        navigate(next);
       } else {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
           if (session) {
-            navigate("/");
+            navigate(next);
           }
         });
         return () => subscription.unsubscribe();
       }
     });
-  }, [navigate]);
+  }, [navigate, next]);
 
   return (
     <div className="container-page max-w-md space-y-4 py-20 text-center">
