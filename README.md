@@ -1,4 +1,4 @@
-# AMU Pulse
+# AMU Pulse 
 
 **Your Campus. Your Questions. Your Choice.**
 
