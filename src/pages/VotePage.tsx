@@ -8,7 +8,7 @@ import { voteLimit } from "@/lib/voting";
 
 export function VotePage() {
   const { user, loading: authLoading } = useAuth();
-  const { dataset: ds, loading: dataLoading } = useDataset();
+  const { dataset: ds, loading: dataLoading, refresh } = useDataset();
   const [selected, setSelected] = useState<string[]>([]);
   const [votesLoading, setVotesLoading] = useState(false);
 
@@ -97,6 +97,7 @@ export function VotePage() {
               selected={selected}
               onVoteSaved={() => {
                 if (user?.id) loadUserVotes(user.id);
+                refresh();
               }}
             />
           )}

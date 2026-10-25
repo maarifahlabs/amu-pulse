@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
+import { useDataset } from "@/hooks/useDataset";
 
 export interface BallotOption {
   id: string;
@@ -44,6 +45,7 @@ function PostBallot({
   onVoteSaved?: () => void;
 }) {
   const { user } = useAuth();
+  const { incrementVoteCount } = useDataset();
   const [picked, setPicked] = useState(
     group.options.map((option) => option.id).filter((id) => selected.includes(id))
   );
@@ -85,11 +87,19 @@ function PostBallot({
       });
 
       if (error) {
-        setMessage({ type: "error", text: error.message });
+        setMessage({
+          type: "error",
+          text: error.message.includes("does not exist")
+            ? "Database function submit_student_vote is not created yet. Please execute the SQL in Supabase."
+            : error.message,
+        });
       } else if (data && !data.success) {
         setMessage({ type: "error", text: data.error || "Failed to save vote." });
       } else {
         setMessage({ type: "ok", text: `Your vote for ${group.title} has been saved!` });
+        for (const cid of picked) {
+          incrementVoteCount(cid);
+        }
         if (onVoteSaved) onVoteSaved();
       }
     } catch (err) {

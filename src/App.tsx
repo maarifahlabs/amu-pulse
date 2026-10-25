@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
+import { DatasetProvider } from "@/context/DatasetContext";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
@@ -34,10 +35,11 @@ function ScrollToTop() {
 export function App() {
   return (
     <AuthProvider>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <ScrollToTop />
-        <div className="flex min-h-screen flex-col bg-slate-50">
-          <Header />
+      <DatasetProvider>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
+          <ScrollToTop />
+          <div className="flex min-h-screen flex-col bg-slate-50">
+            <Header />
           <main id="main" className="flex-1 pb-16">
             <Routes>
               <Route path="/" element={<HomePage />} />
@@ -72,6 +74,7 @@ export function App() {
           <Footer />
         </div>
       </BrowserRouter>
+      </DatasetProvider>
     </AuthProvider>
   );
 }
