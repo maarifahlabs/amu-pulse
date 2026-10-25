@@ -15,6 +15,21 @@ export function VotePage() {
   async function loadUserVotes(userId: string) {
     setVotesLoading(true);
     try {
+      // 1. Try dev endpoint (in local dev mode)
+      try {
+        const devRes = await fetch(`/api/my-votes?profile_id=${userId}`);
+        if (devRes.ok) {
+          const rows = await devRes.json();
+          if (Array.isArray(rows) && rows.length > 0) {
+            setSelected(rows.map((row: any) => row.candidate_id as string));
+            return;
+          }
+        }
+      } catch {
+        // Dev endpoint not available
+      }
+
+      // 2. Direct client query (production)
       const { data, error } = await supabase
         .from("student_votes")
         .select("candidate_id")

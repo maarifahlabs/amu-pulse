@@ -81,55 +81,61 @@ function PostBallot({
     setMessage(null);
 
     try {
-      // 1. Direct standard Supabase delete + insert (same dynamic behavior as Next.js)
-      const { error: deleteError } = await supabase
-        .from("student_votes")
-        .delete()
-        .eq("profile_id", user.id)
-        .eq("position_id", group.id);
+      let saved = false;
 
-      if (!deleteError) {
-        const { error: insertError } = await supabase
+      // 1. Try local dev voting endpoint first (runs seamlessly in dev without database changes)
+      try {
+        const devRes = await fetch("/api/vote", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profile_id: user.id,
+            position_id: group.id,
+            candidate_ids: picked,
+          }),
+        });
+        if (devRes.ok) {
+          const json = await devRes.json();
+          if (json.success) saved = true;
+        }
+      } catch {
+        // Dev endpoint not available (e.g. production static CDN)
+      }
+
+      // 2. Direct client delete + insert fallback (for production with RLS)
+      if (!saved) {
+        const { error: deleteError } = await supabase
           .from("student_votes")
-          .insert(
-            picked.map((id) => ({
-              profile_id: user.id,
-              candidate_id: id,
-              position_id: group.id,
-            }))
-          );
+          .delete()
+          .eq("profile_id", user.id)
+          .eq("position_id", group.id);
 
-        if (!insertError) {
-          setMessage({ type: "ok", text: `Your vote for ${group.title} has been saved!` });
-          for (const cid of picked) {
-            incrementVoteCount(cid);
-          }
-          if (onVoteSaved) onVoteSaved();
-          return;
+        if (!deleteError) {
+          const { error: insertError } = await supabase
+            .from("student_votes")
+            .insert(
+              picked.map((id) => ({
+                profile_id: user.id,
+                candidate_id: id,
+                position_id: group.id,
+              }))
+            );
+
+          if (!insertError) saved = true;
         }
       }
 
-      // 2. Fallback to RPC if direct insert is blocked by database permissions
-      const { data, error } = await supabase.rpc("submit_student_vote", {
-        p_position_id: group.id,
-        p_candidate_ids: picked,
-      });
-
-      if (error) {
-        setMessage({
-          type: "error",
-          text: error.message.includes("does not exist")
-            ? "Please run the 3-line SQL permission in Supabase to enable voting."
-            : error.message,
-        });
-      } else if (data && !data.success) {
-        setMessage({ type: "error", text: data.error || "Failed to save vote." });
-      } else {
+      if (saved) {
         setMessage({ type: "ok", text: `Your vote for ${group.title} has been saved!` });
         for (const cid of picked) {
           incrementVoteCount(cid);
         }
         if (onVoteSaved) onVoteSaved();
+      } else {
+        setMessage({
+          type: "error",
+          text: "Could not save vote. If running in production, please execute the 3-line SQL permission in Supabase.",
+        });
       }
     } catch (err) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "Vote submission failed." });
