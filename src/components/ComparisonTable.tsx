@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { Avatar } from "@/components/Avatar";
 import type { Candidate, CandidateAnswer, Issue } from "@/lib/types";
 
@@ -22,7 +22,7 @@ export function ComparisonTable({
       <div className="min-w-fit space-y-4">
         <div className="grid gap-3" style={gridStyle}>
           {candidates.map((c) => (
-            <Link key={c.id} href={`/candidates/${c.slug}`} className="card flex items-center gap-3 p-4 hover:border-brand-500">
+            <Link key={c.id} to={`/candidates/${c.slug}`} className="card flex items-center gap-3 p-4 hover:border-brand-500 transition">
               <Avatar name={c.name} photoUrl={c.photo_url} size={40} />
               <span className="font-semibold">{c.name}</span>
             </Link>
@@ -32,7 +32,7 @@ export function ComparisonTable({
         {issues.map((issue) => (
           <section key={issue.id} aria-labelledby={`cmp-${issue.id}`} className="space-y-2">
             <h3 id={`cmp-${issue.id}`} className="text-sm font-semibold">
-              <Link href={`/issues/${issue.slug}`} className="hover:underline">{issue.title}</Link>
+              <Link to={`/issues/${issue.slug}`} className="hover:underline">{issue.title}</Link>
             </h3>
             <div className="grid gap-3" style={gridStyle}>
               {candidates.map((c) => {

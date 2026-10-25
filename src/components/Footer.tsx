@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
 export function Footer() {
   return (
@@ -11,12 +11,12 @@ export function Footer() {
           official AMU Registrar notices.
         </p>
         <div className="flex flex-wrap gap-4 pt-2">
-          <Link href="/about" className="hover:underline">About</Link>
-          <Link href="/contact" className="hover:underline">Contact us</Link>
-          <Link href="/election-guide" className="hover:underline">Election guide</Link>
-          <Link href="/poster" className="hover:underline">QR poster</Link>
-          <Link href="/candidate/dashboard" className="hover:underline">For candidates</Link>
-          <a href="https://www.maarifahlabs.com" className="hover:underline">Maarifah Labs</a>
+          <Link to="/about" className="hover:underline">About</Link>
+          <Link to="/contact" className="hover:underline">Contact us</Link>
+          <Link to="/election-guide" className="hover:underline">Election guide</Link>
+          <Link to="/poster" className="hover:underline">QR poster</Link>
+          <Link to="/candidate/dashboard" className="hover:underline">For candidates</Link>
+          <a href="https://www.maarifahlabs.com" target="_blank" rel="noopener noreferrer" className="hover:underline">Maarifah Labs</a>
         </div>
       </div>
     </footer>

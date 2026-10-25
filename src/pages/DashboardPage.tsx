@@ -1,0 +1,284 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { YourVotes } from "@/components/YourVotes";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
+import { useDataset } from "@/hooks/useDataset";
+
+export function DashboardPage() {
+  const { user, profile, loading: authLoading, signOut } = useAuth();
+  const { dataset: ds } = useDataset();
+  const navigate = useNavigate();
+
+  const [linkedCandidate, setLinkedCandidate] = useState<any | null>(null);
+  const [candidateClaims, setCandidateClaims] = useState<any[]>([]);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  // Candidate edit state
+  const [bio, setBio] = useState("");
+  const [manifesto, setManifesto] = useState("");
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [savingBio, setSavingBio] = useState(false);
+  const [savingManifesto, setSavingManifesto] = useState(false);
+  const [savingAnswer, setSavingAnswer] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/login?next=/candidate/dashboard");
+    }
+  }, [user, authLoading, navigate]);
+
+  async function loadCandidateDetails(userId: string) {
+    setLoadingProfile(true);
+    try {
+      const [candRes, claimsRes] = await Promise.all([
+        supabase
+          .from("candidates")
+          .select("id, slug, name, bio, photo_url, positions(title)")
+          .eq("profile_id", userId)
+          .maybeSingle(),
+        supabase
+          .from("candidate_claims")
+          .select("id, status, created_at, candidate_id, candidates(name)")
+          .eq("profile_id", userId)
+          .order("created_at", { ascending: false }),
+      ]);
+
+      if (candRes.data) {
+        setLinkedCandidate(candRes.data);
+        setBio(candRes.data.bio || "");
+      }
+      if (claimsRes.data) {
+        setCandidateClaims(claimsRes.data);
+      }
+    } finally {
+      setLoadingProfile(false);
+    }
+  }
+
+  useEffect(() => {
+    if (user?.id) {
+      loadCandidateDetails(user.id);
+    }
+  }, [user?.id]);
+
+  async function handleSaveBio(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingBio(true);
+    setMessage(null);
+    try {
+      const { data, error } = await supabase.rpc("submit_candidate_bio", {
+        p_bio: bio,
+        p_photo_url: null,
+      });
+      if (error || (data && !data.success)) {
+        setMessage(error?.message || data?.error || "Failed to update bio.");
+      } else {
+        setMessage("Bio saved successfully!");
+      }
+    } finally {
+      setSavingBio(false);
+    }
+  }
+
+  async function handleSaveManifesto(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingManifesto(true);
+    setMessage(null);
+    try {
+      const { data, error } = await supabase.rpc("submit_candidate_manifesto", {
+        p_content: manifesto,
+        p_source_url: null,
+      });
+      if (error || (data && !data.success)) {
+        setMessage(error?.message || data?.error || "Failed to submit manifesto.");
+      } else {
+        setMessage("Manifesto published successfully!");
+      }
+    } finally {
+      setSavingManifesto(false);
+    }
+  }
+
+  async function handleSaveAnswer(issueId: string) {
+    const text = answers[issueId];
+    if (!text?.trim()) return;
+    setSavingAnswer(issueId);
+    setMessage(null);
+    try {
+      const { data, error } = await supabase.rpc("submit_candidate_answer", {
+        p_issue_id: issueId,
+        p_answer: text.trim(),
+        p_source_url: null,
+      });
+      if (error || (data && !data.success)) {
+        setMessage(error?.message || data?.error || "Failed to submit answer.");
+      } else {
+        setMessage("Answer submitted successfully!");
+      }
+    } finally {
+      setSavingAnswer(null);
+    }
+  }
+
+  if (authLoading || !user) {
+    return (
+      <div className="container-page py-20 text-center">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-brand-600 border-r-transparent" />
+        <p className="mt-4 text-sm text-slate-600 font-medium">Checking your account…</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container-page space-y-6 py-8">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold font-display">Your Account</h1>
+          <p className="text-sm text-slate-600">Signed in as <span className="font-semibold text-slate-800">{user.email}</span></p>
+        </div>
+        <div className="flex gap-2">
+          {profile?.role === "admin" && (
+            <Link to="/admin/dashboard" className="btn-secondary">
+              Admin Dashboard
+            </Link>
+          )}
+          <button onClick={() => signOut()} className="btn-secondary">
+            Sign out
+          </button>
+        </div>
+      </header>
+
+      {message && (
+        <div className="rounded-xl bg-brand-50 border border-brand-200 p-4 text-sm font-medium text-brand-900">
+          {message}
+        </div>
+      )}
+
+      {/* Student Votes Section */}
+      <YourVotes profileId={user.id} />
+
+      {/* Candidate Profile Section */}
+      {loadingProfile ? (
+        <div className="card text-center py-8 text-sm text-slate-500 animate-pulse">
+          Loading profile details…
+        </div>
+      ) : linkedCandidate ? (
+        <div className="space-y-6">
+          <div className="card space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <span className="badge bg-brand-50 text-brand-700 font-semibold uppercase text-xs">
+                  {linkedCandidate.positions?.title || "Candidate"}
+                </span>
+                <h2 className="text-xl font-bold font-display mt-1">{linkedCandidate.name}</h2>
+              </div>
+              <Link to={`/candidates/${linkedCandidate.slug}`} className="btn-secondary text-sm">
+                View Public Profile →
+              </Link>
+            </div>
+
+            <form onSubmit={handleSaveBio} className="space-y-3">
+              <label htmlFor="bio" className="label font-semibold">Your Bio / Background</label>
+              <textarea
+                id="bio"
+                rows={4}
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                className="input"
+                placeholder="Share your academic department, prior leadership experience, and vision."
+              />
+              <button type="submit" disabled={savingBio} className="btn-primary">
+                {savingBio ? "Saving bio…" : "Update Bio"}
+              </button>
+            </form>
+          </div>
+
+          <div className="card space-y-4">
+            <h2 className="text-lg font-bold font-display">Submit / Update Manifesto</h2>
+            <form onSubmit={handleSaveManifesto} className="space-y-3">
+              <label htmlFor="manifesto" className="label font-semibold">Manifesto Text</label>
+              <textarea
+                id="manifesto"
+                rows={6}
+                value={manifesto}
+                onChange={(e) => setManifesto(e.target.value)}
+                className="input"
+                placeholder="Paste your election promises, key agenda points, and initiatives."
+              />
+              <button type="submit" disabled={savingManifesto} className="btn-primary">
+                {savingManifesto ? "Publishing manifesto…" : "Publish Manifesto"}
+              </button>
+            </form>
+          </div>
+
+          {ds?.issues && ds.issues.length > 0 && (
+            <div className="card space-y-4">
+              <h2 className="text-lg font-bold font-display">Answer Campus Issues</h2>
+              <div className="space-y-4">
+                {ds.issues.map((issue) => (
+                  <div key={issue.id} className="rounded-xl border border-slate-200 p-4 space-y-2 bg-slate-50/50">
+                    <h3 className="font-semibold text-slate-800">{issue.title}</h3>
+                    {issue.description && <p className="text-xs text-slate-600">{issue.description}</p>}
+                    <textarea
+                      rows={3}
+                      className="input bg-white"
+                      placeholder="Your official stance or planned action for this issue…"
+                      value={answers[issue.id] ?? ""}
+                      onChange={(e) => setAnswers({ ...answers, [issue.id]: e.target.value })}
+                    />
+                    <button
+                      type="button"
+                      disabled={savingAnswer === issue.id || !answers[issue.id]?.trim()}
+                      onClick={() => handleSaveAnswer(issue.id)}
+                      className="btn-secondary text-xs"
+                    >
+                      {savingAnswer === issue.id ? "Saving…" : "Save Answer"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <section className="card space-y-4">
+          <h2 className="text-lg font-bold font-display">Are you contesting the election?</h2>
+          <p className="text-sm text-slate-600">
+            If you are a verified candidate on the official AMUSU notification, find your profile and click &quot;Claim this profile&quot; to manage your bio, photo, manifesto, and campus issue answers.
+          </p>
+          {candidateClaims.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Your Verification Claims</p>
+              <ul className="space-y-1 text-sm">
+                {candidateClaims.map((c) => (
+                  <li key={c.id} className="flex items-center justify-between rounded-lg bg-slate-50 p-2.5 border border-slate-200">
+                    <span className="font-medium text-slate-800">{c.candidates?.name || "Candidate"}</span>
+                    <span className={`badge ${
+                      c.status === "approved"
+                        ? "bg-emerald-100 text-emerald-800 font-semibold"
+                        : c.status === "pending"
+                        ? "bg-amber-100 text-amber-800 font-semibold"
+                        : "bg-red-100 text-red-800"
+                    }`}>
+                      {c.status.toUpperCase()}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <div className="flex gap-3 pt-2">
+            <Link to="/candidates" className="btn-primary">
+              Find Your Profile to Claim
+            </Link>
+            <Link to="/create" className="btn-secondary">
+              Create New Candidate Listing
+            </Link>
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}

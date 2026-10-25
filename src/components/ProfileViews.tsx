@@ -1,6 +1,5 @@
-"use client";
-
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 const recorded = new Set<string>();
 
@@ -10,21 +9,30 @@ export function ProfileViews({ slug, record = true }: { slug: string; record?: b
   useEffect(() => {
     const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date());
     const key = `${slug}:${day}`;
-    const method = record && !recorded.has(key) ? "POST" : "GET";
-    if (method === "POST") recorded.add(key);
+    const shouldRecord = record && !recorded.has(key);
+    if (shouldRecord) recorded.add(key);
 
-    const controller = new AbortController();
-    fetch(`/api/views/${slug}`, { method, signal: controller.signal })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((body: { daily?: number; total?: number; ready?: boolean } | null) => {
-        if (!body?.ready) return;
-        setStats({ daily: body.daily ?? 0, total: body.total ?? 0 });
-      })
-      .catch(() => {});
+    async function fetchStats() {
+      try {
+        const { data, error } = await supabase.rpc(
+          shouldRecord ? "record_candidate_view" : "candidate_view_stats",
+          { p_slug: slug }
+        );
+        if (!error && Array.isArray(data) && data[0]) {
+          const row = data[0] as { daily_views?: number; total_views?: number };
+          setStats({
+            daily: Number(row.daily_views ?? 0),
+            total: Number(row.total_views ?? 0),
+          });
+        }
+      } catch {
+        // Ignore view errors silently
+      }
+    }
 
-    return () => {
-      if (method === "GET") controller.abort();
-    };
+    if (slug) {
+      fetchStats();
+    }
   }, [slug, record]);
 
   if (!stats) return null;

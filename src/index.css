@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #eefbf6;
+  --color-brand-100: #d5f5e8;
+  --color-brand-500: #12a37a;
+  --color-brand-600: #0b8565;
+  --color-brand-700: #0a6a52;
+  --color-brand-900: #073b2f;
+  --color-ink: #0f172a;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-slate-50 text-ink antialiased;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-600;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-5xl px-4 sm:px-6;
+  }
+  .card {
+    @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm;
+  }
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-primary {
+    @apply bg-brand-600 text-white hover:bg-brand-700;
+  }
+  .btn-secondary {
+    @apply border border-slate-300 bg-white text-slate-800 hover:bg-slate-100;
+  }
+  .btn-danger {
+    @apply border border-red-200 bg-white text-red-700 hover:bg-red-50;
+  }
+  .input {
+    @apply w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100;
+  }
+  .label {
+    @apply mb-1 block text-sm font-medium text-slate-700;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .prose-text {
+    @apply whitespace-pre-line leading-relaxed text-slate-700;
+  }
+  .nav-progress {
+    width: 35%;
+    animation: amu-load 1.1s ease-in-out infinite;
+  }
+}
+
+@keyframes amu-load {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
+
+.vote-now {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  background: #f5c400;
+  padding: 0.25rem 0.25rem 0.25rem 0.75rem;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #0f172a;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.12);
+  transition: background 0.15s ease;
+}
+.vote-now:hover {
+  background: #ffd84a;
+}
+.vote-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  background: #e10600;
+  padding: 0.25rem 0.5rem;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: white;
+}
+.vote-live-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: white;
+  animation: live-blink 1.1s ease-in-out infinite;
+}
+
+@keyframes live-blink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.2; transform: scale(0.7); }
+}

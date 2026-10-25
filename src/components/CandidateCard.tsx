@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { Avatar } from "@/components/Avatar";
 import { CompletenessIndicator } from "@/components/CompletenessIndicator";
 import type { completeness } from "@/lib/data";
@@ -27,7 +27,7 @@ export function CandidateCard({
 }) {
   const place = candidatePlace(candidate);
   return (
-    <Link href={`/candidates/${candidate.slug}`} className="card flex gap-4 transition hover:border-brand-500">
+    <Link to={`/candidates/${candidate.slug}`} className="card flex gap-4 transition hover:border-brand-500 hover:shadow-md">
       <Avatar name={candidate.name} photoUrl={candidate.photo_url} />
       <div className="min-w-0 flex-1 space-y-2">
         <div>

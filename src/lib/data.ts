@@ -1,10 +1,7 @@
-import { unstable_cache } from "next/cache";
-import { cache } from "react";
 import { electionSchedule } from "@/lib/election-schedule";
 import { isSupabaseConfigured } from "@/lib/env";
 import { sampleDataset } from "@/lib/sample-data";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { createPublicClient } from "@/lib/supabase/public";
+import { supabase } from "@/lib/supabase";
 import type {
   Candidate, CandidateAnswer, Dataset, ElectionEvent, Issue, Manifesto, Position, Question,
 } from "@/lib/types";
@@ -14,21 +11,18 @@ const CANDIDATE_COLUMNS =
   "id, slug, profile_id, position_id, ballot_number, name, department, faculty, bio, photo_url, verification_status, official_source_url";
 
 /**
- * Loads all public content in one go. At student-union scale (dozens of
- * candidates, ~15 issues) this is cheaper and simpler than per-page queries,
- * and RLS guarantees only published, verified rows come back.
+ * Loads all public content in one go.
  */
-export const getDataset = cache(unstable_cache(async (): Promise<Dataset> => {
+export async function getDataset(): Promise<Dataset> {
   if (!isSupabaseConfigured) return sampleDataset;
-  const sb = createPublicClient();
 
   const [positions, candidates, manifestos, issues, answers, events] = await Promise.all([
-    sb.from("positions").select("id, slug, title, description, sort_order").order("sort_order"),
-    sb.from("candidates").select(CANDIDATE_COLUMNS).order("ballot_number").order("name"),
-    sb.from("manifestos").select("id, candidate_id, content, source_url, published_at").order("published_at", { ascending: false }),
-    sb.from("issues").select("id, slug, title, description, context, category, published_at").order("published_at", { ascending: false }),
-    sb.from("candidate_answers").select("id, candidate_id, issue_id, answer, source_url, updated_at"),
-    sb.from("election_events").select("id, title, description, kind, starts_at, source_url, verified_at").order("starts_at"),
+    supabase.from("positions").select("id, slug, title, description, sort_order").order("sort_order"),
+    supabase.from("candidates").select(CANDIDATE_COLUMNS).order("ballot_number").order("name"),
+    supabase.from("manifestos").select("id, candidate_id, content, source_url, published_at").order("published_at", { ascending: false }),
+    supabase.from("issues").select("id, slug, title, description, context, category, published_at").order("published_at", { ascending: false }),
+    supabase.from("candidate_answers").select("id, candidate_id, issue_id, answer, source_url, updated_at"),
+    supabase.from("election_events").select("id, title, description, kind, starts_at, source_url, verified_at").order("starts_at"),
   ]);
 
   for (const result of [positions, candidates, manifestos, issues, answers, events]) {
@@ -50,7 +44,7 @@ export const getDataset = cache(unstable_cache(async (): Promise<Dataset> => {
     answers: (answers.data ?? []) as CandidateAnswer[],
     events: events.data?.length ? (events.data as ElectionEvent[]) : electionSchedule,
   };
-}, ["public-dataset"], { revalidate: 120, tags: ["public-dataset"] }));
+}
 
 export interface TrendingRow {
   slug: string;
@@ -58,39 +52,16 @@ export interface TrendingRow {
   total_views: number;
 }
 
-/** Public totals only. Voter identities stay on student_votes. */
-export const getVoteCounts = cache(unstable_cache(async (): Promise<Record<string, number>> => {
-  if (!isSupabaseConfigured) return {};
-  try {
-    const db = createAdminClient();
-    const counts: Record<string, number> = {};
-    const pageSize = 1000;
-    for (let from = 0; ; from += pageSize) {
-      const { data, error } = await db.from("student_votes").select("candidate_id").range(from, from + pageSize - 1);
-      if (error || !data) return counts;
-      for (const row of data) {
-        const id = row.candidate_id as string;
-        counts[id] = (counts[id] ?? 0) + 1;
-      }
-      if (data.length < pageSize) break;
-    }
-    return counts;
-  } catch {
-    return {};
-  }
-}, ["vote-counts"], { revalidate: 60, tags: ["vote-counts"] }));
-
-export const getTrending = cache(unstable_cache(async (): Promise<TrendingRow[] | null> => {
+export async function getTrending(): Promise<TrendingRow[] | null> {
   if (!isSupabaseConfigured) return null;
-  const sb = createPublicClient();
-  const { data, error } = await sb.rpc("trending_candidates", { p_limit: 5 });
+  const { data, error } = await supabase.rpc("trending_candidates", { p_limit: 5 });
   if (error || !Array.isArray(data)) return null;
   return (data as TrendingRow[]).map((row) => ({
     slug: row.slug,
     daily_views: Number(row.daily_views ?? 0),
     total_views: Number(row.total_views ?? 0),
   }));
-}, ["trending-candidates"], { revalidate: 60 }));
+}
 
 export function latestManifesto(ds: Dataset, candidateId: string) {
   return ds.manifestos.find((m) => m.candidate_id === candidateId) ?? null;
@@ -165,7 +136,7 @@ export function pollingEvent(ds: Dataset) {
 
 export async function getApprovedQuestions(issueId: string): Promise<Question[]> {
   if (!isSupabaseConfigured) return [];
-  const { data, error } = await createPublicClient()
+  const { data, error } = await supabase
     .from("questions")
     .select("id, issue_id, question, created_at")
     .eq("issue_id", issueId)
