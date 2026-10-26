@@ -23,6 +23,8 @@ import { PosterPage } from "@/pages/PosterPage";
 import { AboutPage } from "@/pages/AboutPage";
 import { ContactPage } from "@/pages/ContactPage";
 import { AdminDashboardPage } from "@/pages/AdminDashboardPage";
+import { AdminLoginPage } from "@/pages/AdminLoginPage";
+import { AdminGate } from "@/pages/AdminGate";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -59,6 +61,8 @@ export function App() {
               <Route path="/poster" element={<PosterPage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contact" element={<ContactPage />} />
+              <Route path="/admin" element={<AdminGate />} />
+              <Route path="/admin/login" element={<AdminLoginPage />} />
               <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
               <Route
                 path="*"
