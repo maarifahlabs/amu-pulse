@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Avatar } from "@/components/Avatar";
+import { NameWithBadge } from "@/components/NameWithBadge";
 import { QuestionForm } from "@/components/QuestionForm";
 import { ShareButton } from "@/components/ShareButton";
 import { issueResponseCount, issueResponsesByPosition } from "@/lib/data";
@@ -98,7 +99,7 @@ export function IssueDetailPage() {
                   <Avatar name={candidate.name} photoUrl={candidate.photo_url} size={40} />
                   <div className="flex-1">
                     <Link to={`/candidates/${candidate.slug}`} className="font-semibold hover:underline">
-                      {candidate.name}
+                      <NameWithBadge id={candidate.id} name={candidate.name} claimed={candidate.profile_id !== null} />
                     </Link>
                   </div>
                   <span className={`badge ${answer ? "bg-brand-50 text-brand-700 font-medium" : "bg-slate-100 text-slate-500"}`}>

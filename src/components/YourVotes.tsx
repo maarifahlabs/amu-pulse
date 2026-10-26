@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { NameWithBadge } from "@/components/NameWithBadge";
 import { supabase } from "@/lib/supabase";
 import { joinedField } from "@/lib/format";
 
@@ -13,7 +14,7 @@ export function YourVotes({ profileId }: { profileId: string }) {
       try {
         const { data, error } = await supabase
           .from("student_votes")
-          .select("candidate_id, candidates(name, slug, ballot_number, positions(title, sort_order))")
+          .select("candidate_id, candidates(name, slug, ballot_number, profile_id, positions(title, sort_order))")
           .eq("profile_id", profileId);
 
         if (!error && data) {
@@ -25,6 +26,7 @@ export function YourVotes({ profileId }: { profileId: string }) {
               return {
                 id: row.candidate_id as string,
                 name: candidate.name as string,
+                claimed: candidate.profile_id != null,
                 slug: candidate.slug as string,
                 serial,
                 post: joinedField(candidate.positions, "title") || "Candidate",
@@ -66,7 +68,7 @@ export function YourVotes({ profileId }: { profileId: string }) {
               <span>
                 <span className="block text-xs font-medium uppercase tracking-wide text-slate-500">{vote.post}</span>
                 <Link to={`/candidates/${vote.slug}`} className="font-semibold text-brand-700 hover:underline">
-                  {vote.name}
+                  <NameWithBadge id={vote.id} name={vote.name} claimed={vote.claimed} />
                 </Link>
               </span>
               {vote.serial && <span className="shrink-0 text-slate-500 font-mono text-xs">Serial {vote.serial}</span>}

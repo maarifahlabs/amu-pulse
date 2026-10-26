@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Avatar } from "@/components/Avatar";
 import { CompletenessIndicator } from "@/components/CompletenessIndicator";
+import { NameWithBadge } from "@/components/NameWithBadge";
 import type { completeness } from "@/lib/data";
 import { candidatePlace } from "@/lib/format";
 import type { Candidate, Position } from "@/lib/types";
@@ -35,7 +36,15 @@ export function CandidateCard({
             {position?.title}
             {candidate.ballot_number !== null && ` · No. ${String(candidate.ballot_number).padStart(2, "0")}`}
           </p>
-          <h3 className="truncate text-base font-semibold">{candidate.name}</h3>
+          <h3 className="text-base font-semibold">
+            <NameWithBadge
+              id={candidate.id}
+              name={candidate.name}
+              claimed={candidate.profile_id !== null}
+              initialVotes={votes ?? 0}
+              truncate
+            />
+          </h3>
           {place && <p className="truncate text-sm text-slate-600">{place}</p>}
         </div>
         <CompletenessIndicator data={stats} />

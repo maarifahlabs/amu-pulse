@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Avatar } from "@/components/Avatar";
+import { NameWithBadge } from "@/components/NameWithBadge";
 import type { Candidate, CandidateAnswer, Issue } from "@/lib/types";
 
 /**
@@ -24,7 +25,7 @@ export function ComparisonTable({
           {candidates.map((c) => (
             <Link key={c.id} to={`/candidates/${c.slug}`} className="card flex items-center gap-3 p-4 hover:border-brand-500 transition">
               <Avatar name={c.name} photoUrl={c.photo_url} size={40} />
-              <span className="font-semibold">{c.name}</span>
+              <NameWithBadge id={c.id} name={c.name} claimed={c.profile_id !== null} className="font-semibold" />
             </Link>
           ))}
         </div>
@@ -39,7 +40,9 @@ export function ComparisonTable({
                 const answer = answerFor(c.id, issue.id);
                 return (
                   <div key={c.id} className="rounded-xl border border-slate-200 bg-white p-3 text-sm">
-                    <p className="mb-1 text-xs font-semibold text-slate-500 sm:hidden">{c.name}</p>
+                    <p className="mb-1 text-xs font-semibold text-slate-500 sm:hidden">
+                      <NameWithBadge id={c.id} name={c.name} claimed={c.profile_id !== null} />
+                    </p>
                     {answer ? (
                       <p className="prose-text">{answer.answer}</p>
                     ) : (

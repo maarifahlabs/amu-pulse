@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { NameWithBadge } from "@/components/NameWithBadge";
 import { YourVotes } from "@/components/YourVotes";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -172,7 +173,9 @@ export function DashboardPage() {
                 <span className="badge bg-brand-50 text-brand-700 font-semibold uppercase text-xs">
                   {linkedCandidate.positions?.title || "Candidate"}
                 </span>
-                <h2 className="text-xl font-bold font-display mt-1">{linkedCandidate.name}</h2>
+                <h2 className="text-xl font-bold font-display mt-1">
+                  <NameWithBadge id={linkedCandidate.id} name={linkedCandidate.name} claimed />
+                </h2>
               </div>
               <Link to={`/candidates/${linkedCandidate.slug}`} className="btn-secondary text-sm">
                 View Public Profile →

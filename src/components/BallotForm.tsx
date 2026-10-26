@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { NameWithBadge } from "@/components/NameWithBadge";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useDataset } from "@/hooks/useDataset";
@@ -8,6 +9,7 @@ export interface BallotOption {
   name: string;
   serial: string;
   faculty: string | null;
+  claimed: boolean;
 }
 
 export interface BallotGroup {
@@ -201,7 +203,7 @@ function PostBallot({
                 className="h-4 w-4 accent-brand-600"
               />
               <span className="min-w-0">
-                <span className="block font-medium">{option.name}</span>
+                <NameWithBadge id={option.id} name={option.name} claimed={option.claimed} className="font-medium" />
                 <span className="block text-xs text-slate-500">
                   {option.serial ? `Serial ${option.serial}` : "Serial not allotted yet"}
                   {option.faculty ? ` · ${option.faculty}` : ""}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { NameWithBadge } from "@/components/NameWithBadge";
 import { useAuth } from "@/context/AuthContext";
 import { useDataset } from "@/hooks/useDataset";
 import { supabase } from "@/lib/supabase";
@@ -70,7 +71,9 @@ export function ClaimPage() {
           {position?.title}
           {candidate.ballot_number != null && ` · No. ${String(candidate.ballot_number).padStart(2, "0")}`}
         </p>
-        <h1 className="text-2xl font-bold font-display">{candidate.name}</h1>
+        <h1 className="text-2xl font-bold font-display">
+          <NameWithBadge id={candidate.id} name={candidate.name} claimed={candidate.profile_id !== null} />
+        </h1>
       </header>
 
       {error && (

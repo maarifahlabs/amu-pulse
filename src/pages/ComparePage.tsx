@@ -1,5 +1,6 @@
 import { useSearchParams } from "react-router-dom";
 import { ComparisonTable } from "@/components/ComparisonTable";
+import { NameWithBadge } from "@/components/NameWithBadge";
 import { ShareButton } from "@/components/ShareButton";
 import { findAnswer } from "@/lib/data";
 import { useDataset } from "@/hooks/useDataset";
@@ -87,7 +88,7 @@ export function ComparePage() {
                   onChange={() => toggleCandidate(c.slug)}
                   className="h-4 w-4 accent-brand-600"
                 />
-                <span className="font-medium text-slate-700">{c.name}</span>
+                <NameWithBadge id={c.id} name={c.name} claimed={c.profile_id !== null} className="font-medium text-slate-700" />
               </label>
             ))}
           </div>

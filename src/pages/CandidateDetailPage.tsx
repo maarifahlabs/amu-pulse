@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { Avatar } from "@/components/Avatar";
+import { NameWithBadge } from "@/components/NameWithBadge";
 import { VoteCount } from "@/components/CandidateCard";
 import { CompletenessIndicator } from "@/components/CompletenessIndicator";
 import { ProfileViews } from "@/components/ProfileViews";
@@ -43,7 +44,14 @@ export function CandidateDetailPage() {
         <Avatar name={candidate.name} photoUrl={candidate.photo_url} size={96} />
         <div className="flex-1 space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">{position?.title}</p>
-          <h1 className="text-2xl font-bold font-display">{candidate.name}</h1>
+          <h1 className="text-2xl font-bold font-display">
+            <NameWithBadge
+              id={candidate.id}
+              name={candidate.name}
+              claimed={candidate.profile_id !== null}
+              initialVotes={votes}
+            />
+          </h1>
           <ProfileViews slug={candidate.slug} />
           <VoteCount votes={votes} large />
           {candidatePlace(candidate) && <p className="text-sm text-slate-600">{candidatePlace(candidate)}</p>}
