@@ -39,7 +39,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://movhilslxqbpzghykqty.supabase.co' }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_W7czbsr1qMatgxyxe2lgdw_tX1EdRkw' }}
-          VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH || '/amu-pulse/' }}
+          VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH || '/' }}
         run: |
           npm run build
           cp dist/index.html dist/404.html
