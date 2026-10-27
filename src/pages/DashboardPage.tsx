@@ -36,7 +36,7 @@ export function DashboardPage() {
       const [candRes, claimsRes] = await Promise.all([
         supabase
           .from("candidates")
-          .select("id, slug, name, bio, photo_url, positions(title)")
+          .select("id, slug, name, bio, photo_url, verification_status, positions(title)")
           .eq("profile_id", userId)
           .maybeSingle(),
         supabase
@@ -170,9 +170,24 @@ export function DashboardPage() {
           <div className="card space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <span className="badge bg-brand-50 text-brand-700 font-semibold uppercase text-xs">
-                  {linkedCandidate.positions?.title || "Candidate"}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="badge bg-brand-50 text-brand-700 font-semibold uppercase text-xs">
+                    {linkedCandidate.positions?.title || "Candidate"}
+                  </span>
+                  {linkedCandidate.verification_status === "verified" ? (
+                    <span className="badge bg-emerald-100 text-emerald-800 font-bold text-xs">
+                      ✓ Verified
+                    </span>
+                  ) : linkedCandidate.verification_status === "rejected" ? (
+                    <span className="badge bg-rose-100 text-rose-800 font-bold text-xs">
+                      ✕ Rejected
+                    </span>
+                  ) : (
+                    <span className="badge bg-amber-100 text-amber-800 font-bold text-xs">
+                      ⏳ Pending Verification
+                    </span>
+                  )}
+                </div>
                 <h2 className="text-xl font-bold font-display mt-1">
                   <NameWithBadge id={linkedCandidate.id} name={linkedCandidate.name} claimed />
                 </h2>
@@ -181,6 +196,16 @@ export function DashboardPage() {
                 View Public Profile →
               </Link>
             </div>
+
+            {linkedCandidate.verification_status === "unverified" && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-900 flex items-start gap-2.5">
+                <span className="text-base leading-none">⏳</span>
+                <div>
+                  <span className="font-bold">Nomination Under Review: </span>
+                  Your profile has been created and is awaiting official verification by election administrators against the AMU University ballot list. You can update your bio, manifesto, and stance answers below while review is pending.
+                </div>
+              </div>
+            )}
 
             <form onSubmit={handleSaveBio} className="space-y-3">
               <label htmlFor="bio" className="label font-semibold">Your Bio / Background</label>

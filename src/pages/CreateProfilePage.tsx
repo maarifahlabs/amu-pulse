@@ -56,7 +56,7 @@ export function CreateProfilePage() {
         department: department || null,
         faculty: faculty || null,
         bio,
-        verification_status: "verified",
+        verification_status: "unverified",
       });
 
       if (insertError) {
@@ -77,7 +77,7 @@ export function CreateProfilePage() {
       <header className="space-y-2">
         <h1 className="text-2xl font-bold font-display">Create your profile</h1>
         <p className="text-sm text-slate-600">
-          Add yourself as a candidate. If your name is already on the list, open that candidate and choose Claim this profile instead.
+          Add yourself as a candidate. Once submitted, your profile will be created as <strong>unverified</strong> and sent to administrators for official verification against the university ballot list. If your name is already on the list, open that candidate and choose <em>Claim this profile</em> instead.
         </p>
       </header>
 
