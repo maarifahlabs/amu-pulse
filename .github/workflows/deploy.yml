@@ -1,57 +1,86 @@
-name: Deploy to GitHub Pages
+name: Frontend CI/CD
 
+# Builds on every push and PR; deploys qasim-v1 of maarifahlabs/amu-pulse to the server.
 on:
   push:
-    branches:
-      - qasim-v1
-      - main
+    branches: [qasim-v1, main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 22
+          cache: npm
 
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps
+      - run: npm ci
+      - run: npm run typecheck
 
-      - name: Build Vite application
+      - name: Build
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://movhilslxqbpzghykqty.supabase.co' }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_W7czbsr1qMatgxyxe2lgdw_tX1EdRkw' }}
-          VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH || '/' }}
-        run: |
-          npm run build
-          cp dist/index.html dist/404.html
+          VITE_API_URL: ${{ vars.VITE_API_URL || 'https://amu-pulse.maarifahlabs.com/api' }}
+          VITE_SITE_URL: ${{ vars.VITE_SITE_URL || 'https://amu-pulse.maarifahlabs.com' }}
+          VITE_MAINTENANCE_MODE: ${{ vars.VITE_MAINTENANCE_MODE || 'true' }}
+        run: npm run build
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
         with:
-          path: './dist'
+          name: frontend-dist
+          path: dist
+          retention-days: 7
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+  deploy:
+    name: Deploy to server
+    needs: build
+    if: >-
+      github.repository == 'maarifahlabs/amu-pulse' &&
+      github.event_name != 'pull_request' &&
+      github.ref == 'refs/heads/qasim-v1'
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: deploy-frontend
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Upload and switch release
+        env:
+          HOST: ${{ secrets.SSH_HOST }}
+          USER: ${{ secrets.SSH_USER }}
+        run: |
+          ID="$(date -u +%Y%m%d%H%M%S)-${GITHUB_SHA::7}"
+          WEB=/var/www/amu-pulse
+          SSH="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes"
+          rsync -az --delete -e "$SSH" dist/ "$USER@$HOST:$WEB/releases/$ID/"
+          # Atomic switch, then keep the newest 5 releases.
+          $SSH "$USER@$HOST" "set -e
+            ln -sfn $WEB/releases/$ID $WEB/current.tmp
+            mv -Tf $WEB/current.tmp $WEB/current
+            cd $WEB/releases && ls -1t | tail -n +6 | xargs -r rm -rf --"
+
+      - name: Public check
+        run: curl -fsS --retry 5 --retry-delay 3 -o /dev/null "${{ vars.VITE_SITE_URL || 'https://amu-pulse.maarifahlabs.com' }}/"
