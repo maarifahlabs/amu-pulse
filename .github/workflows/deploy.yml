@@ -47,7 +47,6 @@ jobs:
       github.event_name != 'pull_request' &&
       github.ref == 'refs/heads/qasim-v1'
     runs-on: ubuntu-latest
-    environment: production
     concurrency:
       group: deploy-frontend
       cancel-in-progress: false
