@@ -14,6 +14,8 @@ import {
   adminDeleteCandidate,
   reviewAdminClaim,
   reviewAdminQuestion,
+  resetAdminQuestion,
+  deleteAdminQuestion,
   updateAdminUserRole,
   type AdminCandidateItem,
   type AdminClaimItem,
@@ -275,6 +277,38 @@ export function AdminDashboardPage() {
     }
   };
 
+  const handleResetQuestion = async (questionId: string) => {
+    setProcessingQuestionId(questionId);
+    try {
+      const res = await resetAdminQuestion(questionId);
+      if (!res.success) {
+        setToast({ type: "error", text: res.error || "Reset failed." });
+      } else {
+        setToast({ type: "success", text: "Question reset to pending." });
+        setQuestions((prev) =>
+          prev.map((q) => (q.id === questionId ? { ...q, moderation_status: "pending" } : q))
+        );
+      }
+    } finally {
+      setProcessingQuestionId(null);
+    }
+  };
+
+  const handleDeleteQuestion = async (questionId: string) => {
+    setProcessingQuestionId(questionId);
+    try {
+      const res = await deleteAdminQuestion(questionId);
+      if (!res.success) {
+        setToast({ type: "error", text: res.error || "Delete failed." });
+      } else {
+        setToast({ type: "success", text: "Question deleted." });
+        setQuestions((prev) => prev.filter((q) => q.id !== questionId));
+      }
+    } finally {
+      setProcessingQuestionId(null);
+    }
+  };
+
   // User Role Actions
   const handleUpdateUserRole = async (userId: string, newRole: "student" | "candidate" | "admin") => {
     const res = await updateAdminUserRole(userId, newRole);
@@ -417,6 +451,8 @@ export function AdminDashboardPage() {
               questions={questions}
               issues={ds?.issues || []}
               onReviewQuestion={handleReviewQuestion}
+              onResetQuestion={handleResetQuestion}
+              onDeleteQuestion={handleDeleteQuestion}
               processingQuestionId={processingQuestionId}
             />
           )}

@@ -3,6 +3,7 @@ import { Countdown } from "@/components/Countdown";
 import { ElectionTimeline } from "@/components/ElectionTimeline";
 import { CandidateCard } from "@/components/CandidateCard";
 import { IssueCard } from "@/components/IssueCard";
+import { HomeQuestionsSection } from "@/components/HomeQuestionsSection";
 import { completeness, issueResponseCount, pollingEvent, sortByVotes } from "@/lib/data";
 import { formatDate } from "@/lib/format";
 import { useDataset } from "@/hooks/useDataset";
@@ -137,6 +138,8 @@ export function HomePage() {
           ))}
         </section>
       )}
+
+      <HomeQuestionsSection issues={ds.issues} />
 
       <section className="container-page space-y-4 pt-10">
         <div className="flex items-end justify-between">

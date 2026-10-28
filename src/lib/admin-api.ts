@@ -337,6 +337,29 @@ export async function reviewAdminQuestion(
   return { success: true };
 }
 
+export async function resetAdminQuestion(
+  questionId: string,
+): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase
+    .from("questions")
+    .update({ moderation_status: "pending" })
+    .eq("id", questionId);
+  if (error) return { success: false, error: error.message };
+  return { success: true };
+}
+
+export async function deleteAdminQuestion(
+  questionId: string,
+): Promise<{ success: boolean; error?: string }> {
+  const { data, error } = await supabase.rpc("admin_delete_question", {
+    p_question_id: questionId,
+  });
+  if (error || (data && !data.success)) {
+    return { success: false, error: error?.message || data?.error || "Delete failed." };
+  }
+  return { success: true };
+}
+
 // -------------------------------------------------------------
 // USERS & ROLES API
 // -------------------------------------------------------------

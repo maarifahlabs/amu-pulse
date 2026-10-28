@@ -145,3 +145,16 @@ export async function getApprovedQuestions(issueId: string): Promise<Question[]>
   if (error) throw new Error(`Failed to load questions: ${error.message}`);
   return (data ?? []) as Question[];
 }
+
+export async function getRecentApprovedQuestions(limit = 8): Promise<Question[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await supabase
+    .from("questions")
+    .select("id, issue_id, question, created_at")
+    .eq("moderation_status", "approved")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) return [];
+  return (data ?? []) as Question[];
+}
+
