@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { CandidatePhotoUpload } from "@/components/CandidatePhotoUpload";
 import { NameWithBadge } from "@/components/NameWithBadge";
 import { YourVotes } from "@/components/YourVotes";
 import { useAuth } from "@/context/AuthContext";
@@ -172,6 +173,12 @@ export function DashboardPage() {
                 View Public Profile →
               </Link>
             </div>
+
+            <CandidatePhotoUpload
+              name={linkedCandidate.name}
+              photoUrl={linkedCandidate.photo_url ?? null}
+              onUploaded={(url) => setLinkedCandidate((prev: any) => (prev ? { ...prev, photo_url: url } : prev))}
+            />
 
             {linkedCandidate.verification_status === "unverified" && (
               <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-900 flex items-start gap-2.5">

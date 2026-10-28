@@ -120,12 +120,27 @@ async function request<T>(method: string, path: string, body?: unknown, retried 
   return parse<T>(res);
 }
 
+async function uploadForm<T>(path: string, form: FormData, retried = false): Promise<T> {
+  const token = await accessToken();
+  // No Content-Type header: the browser sets the multipart boundary itself.
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  if (res.status === 401 && token && !retried) {
+    if (await refreshSession()) return uploadForm<T>(path, form, true);
+  }
+  return parse<T>(res);
+}
+
 export const api = {
   get: <T>(path: string) => request<T>("GET", path),
   post: <T>(path: string, body?: unknown) => request<T>("POST", path, body ?? {}),
   put: <T>(path: string, body?: unknown) => request<T>("PUT", path, body ?? {}),
   patch: <T>(path: string, body?: unknown) => request<T>("PATCH", path, body ?? {}),
   delete: <T>(path: string) => request<T>("DELETE", path),
+  upload: <T>(path: string, form: FormData) => uploadForm<T>(path, form),
 };
 
 export const auth = {
