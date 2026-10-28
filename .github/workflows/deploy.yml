@@ -27,8 +27,8 @@ jobs:
 
       - name: Build
         env:
-          VITE_API_URL: ${{ vars.VITE_API_URL || 'https://amu-pulse.maarifahlabs.com/api' }}
-          VITE_SITE_URL: ${{ vars.VITE_SITE_URL || 'https://amu-pulse.maarifahlabs.com' }}
+          VITE_API_URL: ${{ vars.VITE_API_URL || 'https://amupulse.maarifahlabs.com/api' }}
+          VITE_SITE_URL: ${{ vars.VITE_SITE_URL || 'https://amupulse.maarifahlabs.com' }}
           VITE_MAINTENANCE_MODE: ${{ vars.VITE_MAINTENANCE_MODE || 'true' }}
         run: npm run build
 
@@ -82,4 +82,4 @@ jobs:
             cd $WEB/releases && ls -1t | tail -n +6 | xargs -r rm -rf --"
 
       - name: Public check
-        run: curl -fsS --retry 5 --retry-delay 3 -o /dev/null "${{ vars.VITE_SITE_URL || 'https://amu-pulse.maarifahlabs.com' }}/"
+        run: curl -fsS --retry 5 --retry-delay 3 -o /dev/null "${{ vars.VITE_SITE_URL || 'https://amupulse.maarifahlabs.com' }}/"
