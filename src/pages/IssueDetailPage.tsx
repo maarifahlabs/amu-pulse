@@ -4,10 +4,9 @@ import { Avatar } from "@/components/Avatar";
 import { NameWithBadge } from "@/components/NameWithBadge";
 import { QuestionForm } from "@/components/QuestionForm";
 import { ShareButton } from "@/components/ShareButton";
-import { issueResponseCount, issueResponsesByPosition } from "@/lib/data";
+import { getApprovedQuestions, issueResponseCount, issueResponsesByPosition } from "@/lib/data";
 import { formatDate } from "@/lib/format";
 import { useDataset } from "@/hooks/useDataset";
-import { supabase } from "@/lib/supabase";
 import type { Question } from "@/lib/types";
 
 export function IssueDetailPage() {
@@ -20,15 +19,10 @@ export function IssueDetailPage() {
   useEffect(() => {
     async function loadQuestions() {
       if (!issue?.id) return;
-      const { data, error } = await supabase
-        .from("questions")
-        .select("id, issue_id, question, created_at")
-        .eq("issue_id", issue.id)
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      if (!error && data) {
-        setQuestions(data as Question[]);
+      try {
+        setQuestions(await getApprovedQuestions(issue.id));
+      } catch {
+        // Questions are optional on this page.
       }
     }
 

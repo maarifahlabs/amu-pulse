@@ -5,8 +5,8 @@ const getEnv = (viteKey: string, fallback = "") => {
   return fallback;
 };
 
-export const SUPABASE_URL = getEnv("VITE_SUPABASE_URL", "https://movhilslxqbpzghykqty.supabase.co");
-export const SUPABASE_ANON_KEY = getEnv("VITE_SUPABASE_ANON_KEY", "sb_publishable_W7czbsr1qMatgxyxe2lgdw_tX1EdRkw");
+/** Base URL of the AMU Pulse NestJS API (amu-pulse-api). */
+export const API_URL = String(getEnv("VITE_API_URL", "http://localhost:3000")).replace(/\/$/, "");
 export const SITE_URL = (getEnv("VITE_SITE_URL", typeof window !== "undefined" ? window.location.origin : "http://localhost:5173")).replace(/\/$/, "");
 export const BASE_PATH = "";
 
@@ -14,5 +14,3 @@ export function absoluteUrl(path = "/") {
   const normalized = path.startsWith("/") ? path : `/${path}`;
   return `${SITE_URL}${normalized}`;
 }
-
-export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);

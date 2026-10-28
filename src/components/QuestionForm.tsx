@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
 export function QuestionForm({ issueId, issueSlug }: { issueId: string; issueSlug: string }) {
@@ -33,22 +33,10 @@ export function QuestionForm({ issueId, issueSlug }: { issueId: string; issueSlu
     setMessage("");
 
     try {
-      const { data, error } = await supabase.rpc("submit_student_question", {
-        p_issue_id: issueId,
-        p_question: question.trim(),
-      });
-
-      if (error) {
-        setStatus("error");
-        setMessage(error.message);
-      } else if (data && !data.success) {
-        setStatus("error");
-        setMessage(data.error || "Failed to submit question.");
-      } else {
-        setStatus("ok");
-        setMessage("Thanks! Your question has been submitted for moderation.");
-        setQuestion("");
-      }
+      await api.post("/questions", { issue_id: issueId, question: question.trim() });
+      setStatus("ok");
+      setMessage("Thanks! Your question has been submitted for moderation.");
+      setQuestion("");
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message : "Submission failed.");

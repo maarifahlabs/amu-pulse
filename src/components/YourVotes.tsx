@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { NameWithBadge } from "@/components/NameWithBadge";
-import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/api";
 import { joinedField } from "@/lib/format";
 
 export function YourVotes({ profileId }: { profileId: string }) {
@@ -12,12 +12,9 @@ export function YourVotes({ profileId }: { profileId: string }) {
     async function loadVotes() {
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from("student_votes")
-          .select("candidate_id, candidates(name, slug, ballot_number, profile_id, positions(title, sort_order))")
-          .eq("profile_id", profileId);
+        const data = await api.get<any[]>("/me/votes").catch(() => null);
 
-        if (!error && data) {
+        if (data) {
           const parsed = data
             .map((row: any) => {
               const candidate = Array.isArray(row.candidates) ? row.candidates[0] : row.candidates;

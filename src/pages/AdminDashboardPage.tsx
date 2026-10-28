@@ -369,7 +369,7 @@ export function AdminDashboardPage() {
         pendingClaimsCount={claims.length}
         pendingQuestionsCount={questions.filter((q) => !q.moderation_status || q.moderation_status === "pending").length}
         totalCandidatesCount={candidates.length}
-        userEmail={user?.email}
+        userEmail={user?.email ?? undefined}
         onSignOut={() => signOut()}
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
@@ -383,7 +383,7 @@ export function AdminDashboardPage() {
           onOpenMobile={() => setMobileSidebarOpen(true)}
           onRefresh={() => loadAllData(true)}
           isRefreshing={isRefreshing}
-          userEmail={user?.email}
+          userEmail={user?.email ?? undefined}
           onSignOut={() => signOut()}
         />
 

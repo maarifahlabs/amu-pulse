@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { NameWithBadge } from "@/components/NameWithBadge";
 import { useAuth } from "@/context/AuthContext";
 import { useDataset } from "@/hooks/useDataset";
-import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/api";
 
 export function ClaimPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -47,16 +47,8 @@ export function ClaimPage() {
     const evidence = `Email: ${email || user.email}\nPhone: ${phone}\nProof of candidacy:\n${proof}`;
 
     try {
-      const { data, error: rpcError } = await supabase.rpc("submit_candidate_claim", {
-        p_candidate_id: candidate!.id,
-        p_evidence: evidence,
-      });
-
-      if (rpcError || (data && !data.success)) {
-        setError(rpcError?.message || data?.error || "Could not submit your claim.");
-      } else {
-        navigate("/candidate/dashboard");
-      }
+      await api.post(`/candidates/${candidate!.id}/claims`, { evidence });
+      navigate("/candidate/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Submission failed.");
     } finally {

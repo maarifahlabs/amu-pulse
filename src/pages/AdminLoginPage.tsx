@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { api, ApiError, auth } from "@/lib/api";
 
 export function AdminLoginPage() {
   const { user, profile, loading: authLoading } = useAuth();
@@ -26,41 +26,32 @@ export function AdminLoginPage() {
     setSubmitting(true);
 
     try {
-      // 1. Sign in with email + password via Supabase Auth
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-
-      if (signInError) {
-        setError(signInError.message);
-        setSubmitting(false);
-        return;
-      }
-
-      const userId = data.user?.id;
-      if (!userId) {
-        setError("Authentication failed. Please try again.");
+      // 1. Sign in with email + password
+      try {
+        await auth.signInWithPassword(email.trim(), password);
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : "Authentication failed. Please try again.");
         setSubmitting(false);
         return;
       }
 
       // 2. Fetch profile to verify admin role
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", userId)
-        .maybeSingle();
+      let role: string | undefined;
+      try {
+        role = (await api.get<{ profile: { role: string } | null }>("/auth/me")).profile?.role;
+      } catch {
+        // handled below
+      }
 
-      if (profileError || !profileData) {
-        await supabase.auth.signOut();
+      if (!role) {
+        await auth.signOut();
         setError("Unable to verify your account. Contact the administrator.");
         setSubmitting(false);
         return;
       }
 
-      if (profileData.role !== "admin") {
-        await supabase.auth.signOut();
+      if (role !== "admin") {
+        await auth.signOut();
         setError("Access denied. This portal is restricted to administrators only.");
         setSubmitting(false);
         return;

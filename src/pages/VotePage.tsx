@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { BallotForm } from "@/components/BallotForm";
 import { useAuth } from "@/context/AuthContext";
 import { useDataset } from "@/hooks/useDataset";
-import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/api";
 import { voteLimit } from "@/lib/voting";
 
 export function VotePage() {
@@ -15,28 +15,9 @@ export function VotePage() {
   async function loadUserVotes(userId: string) {
     setVotesLoading(true);
     try {
-      // 1. Try dev endpoint (in local dev mode)
-      try {
-        const devRes = await fetch(`/api/my-votes?profile_id=${userId}`);
-        if (devRes.ok) {
-          const rows = await devRes.json();
-          if (Array.isArray(rows) && rows.length > 0) {
-            setSelected(rows.map((row: any) => row.candidate_id as string));
-            return;
-          }
-        }
-      } catch {
-        // Dev endpoint not available
-      }
-
-      // 2. Direct client query (production)
-      const { data, error } = await supabase
-        .from("student_votes")
-        .select("candidate_id")
-        .eq("profile_id", userId);
-
-      if (!error && data) {
-        setSelected(data.map((row: any) => row.candidate_id as string));
+      const rows = await api.get<{ candidate_id: string }[]>("/me/votes").catch(() => null);
+      if (rows) {
+        setSelected(rows.map((row) => row.candidate_id));
       }
     } finally {
       setVotesLoading(false);

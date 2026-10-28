@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NameWithBadge } from "@/components/NameWithBadge";
-import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useDataset } from "@/hooks/useDataset";
 
@@ -83,73 +83,12 @@ function PostBallot({
     setMessage(null);
 
     try {
-      let saved = false;
-
-      let failureReason = "";
-
-      // 1. Try local dev / Vercel serverless voting endpoint first
-      try {
-        const devRes = await fetch("/api/vote", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            profile_id: user.id,
-            position_id: group.id,
-            candidate_ids: picked,
-          }),
-        });
-        if (devRes.ok) {
-          const json = await devRes.json();
-          if (json.success) saved = true;
-          else if (json.error) failureReason = json.error;
-        }
-      } catch {
-        // Endpoint not available (e.g. production static CDN)
+      await api.put(`/me/votes/${group.id}`, { candidate_ids: picked });
+      setMessage({ type: "ok", text: `Your vote for ${group.title} has been saved!` });
+      for (const cid of picked) {
+        incrementVoteCount(cid);
       }
-
-      // 2. Direct client delete + insert fallback (for client-side SPA with RLS)
-      if (!saved) {
-        const { error: deleteError } = await supabase
-          .from("student_votes")
-          .delete()
-          .eq("profile_id", user.id)
-          .eq("position_id", group.id);
-
-        if (deleteError) {
-          failureReason = deleteError.message;
-        } else {
-          const { error: insertError } = await supabase
-            .from("student_votes")
-            .insert(
-              picked.map((id) => ({
-                profile_id: user.id,
-                candidate_id: id,
-                position_id: group.id,
-              }))
-            );
-
-          if (insertError) {
-            failureReason = insertError.message;
-          } else {
-            saved = true;
-          }
-        }
-      }
-
-      if (saved) {
-        setMessage({ type: "ok", text: `Your vote for ${group.title} has been saved!` });
-        for (const cid of picked) {
-          incrementVoteCount(cid);
-        }
-        if (onVoteSaved) onVoteSaved();
-      } else {
-        setMessage({
-          type: "error",
-          text: failureReason
-            ? `Could not save vote (${failureReason}). Please execute the 3-line SQL permission in Supabase SQL editor.`
-            : "Could not save vote. If running in production, please execute the 3-line SQL permission in Supabase.",
-        });
-      }
+      if (onVoteSaved) onVoteSaved();
     } catch (err) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "Vote submission failed." });
     } finally {

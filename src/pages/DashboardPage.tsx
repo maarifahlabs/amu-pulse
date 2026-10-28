@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { NameWithBadge } from "@/components/NameWithBadge";
 import { YourVotes } from "@/components/YourVotes";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/api";
 import { useDataset } from "@/hooks/useDataset";
 
 export function DashboardPage() {
@@ -33,25 +33,17 @@ export function DashboardPage() {
   async function loadCandidateDetails(userId: string) {
     setLoadingProfile(true);
     try {
-      const [candRes, claimsRes] = await Promise.all([
-        supabase
-          .from("candidates")
-          .select("id, slug, name, bio, photo_url, verification_status, positions(title)")
-          .eq("profile_id", userId)
-          .maybeSingle(),
-        supabase
-          .from("candidate_claims")
-          .select("id, status, created_at, candidate_id, candidates(name)")
-          .eq("profile_id", userId)
-          .order("created_at", { ascending: false }),
+      const [candidate, claims] = await Promise.all([
+        api.get<any>("/me/candidate").catch(() => null),
+        api.get<any[]>("/me/claims").catch(() => null),
       ]);
 
-      if (candRes.data) {
-        setLinkedCandidate(candRes.data);
-        setBio(candRes.data.bio || "");
+      if (candidate) {
+        setLinkedCandidate(candidate);
+        setBio(candidate.bio || "");
       }
-      if (claimsRes.data) {
-        setCandidateClaims(claimsRes.data);
+      if (claims) {
+        setCandidateClaims(claims);
       }
     } finally {
       setLoadingProfile(false);
@@ -69,15 +61,10 @@ export function DashboardPage() {
     setSavingBio(true);
     setMessage(null);
     try {
-      const { data, error } = await supabase.rpc("submit_candidate_bio", {
-        p_bio: bio,
-        p_photo_url: null,
-      });
-      if (error || (data && !data.success)) {
-        setMessage(error?.message || data?.error || "Failed to update bio.");
-      } else {
-        setMessage("Bio saved successfully!");
-      }
+      await api.put("/me/candidate/bio", { bio });
+      setMessage("Bio saved successfully!");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Failed to update bio.");
     } finally {
       setSavingBio(false);
     }
@@ -88,15 +75,10 @@ export function DashboardPage() {
     setSavingManifesto(true);
     setMessage(null);
     try {
-      const { data, error } = await supabase.rpc("submit_candidate_manifesto", {
-        p_content: manifesto,
-        p_source_url: null,
-      });
-      if (error || (data && !data.success)) {
-        setMessage(error?.message || data?.error || "Failed to submit manifesto.");
-      } else {
-        setMessage("Manifesto published successfully!");
-      }
+      await api.post("/me/candidate/manifestos", { content: manifesto });
+      setMessage("Manifesto published successfully!");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Failed to submit manifesto.");
     } finally {
       setSavingManifesto(false);
     }
@@ -108,16 +90,10 @@ export function DashboardPage() {
     setSavingAnswer(issueId);
     setMessage(null);
     try {
-      const { data, error } = await supabase.rpc("submit_candidate_answer", {
-        p_issue_id: issueId,
-        p_answer: text.trim(),
-        p_source_url: null,
-      });
-      if (error || (data && !data.success)) {
-        setMessage(error?.message || data?.error || "Failed to submit answer.");
-      } else {
-        setMessage("Answer submitted successfully!");
-      }
+      await api.put(`/me/candidate/answers/${issueId}`, { answer: text.trim() });
+      setMessage("Answer submitted successfully!");
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Failed to submit answer.");
     } finally {
       setSavingAnswer(null);
     }

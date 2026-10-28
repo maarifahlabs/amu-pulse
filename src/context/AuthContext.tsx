@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import type { User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
+import { api, auth, type SessionUser } from "@/lib/api";
 
 export interface Profile {
   id: string;
@@ -10,7 +9,7 @@ export interface Profile {
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: SessionUser | null;
   profile: Profile | null;
   loading: boolean;
   signInWithGoogle: (next?: string) => Promise<void>;
@@ -26,72 +25,50 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<SessionUser | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function fetchProfile(userId: string) {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, display_name, role, created_at")
-        .eq("id", userId)
-        .maybeSingle();
-
-      if (!error && data) {
-        setProfile(data as Profile);
-      } else {
-        // Fallback default student profile
-        setProfile({ id: userId, display_name: null, role: "student" });
-      }
+      const { profile: data } = await api.get<{ profile: Profile | null }>("/auth/me");
+      setProfile(data ?? { id: userId, display_name: null, role: "student" });
     } catch {
+      // Fallback default student profile
       setProfile({ id: userId, display_name: null, role: "student" });
     }
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        fetchProfile(currentUser.id).finally(() => setLoading(false));
-      } else {
-        setProfile(null);
-        setLoading(false);
-      }
-    });
+    const currentUser = auth.getSession()?.user ?? null;
+    setUser(currentUser);
+    if (currentUser) {
+      fetchProfile(currentUser.id).finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        fetchProfile(currentUser.id);
+    const unsubscribe = auth.onChange((session) => {
+      const nextUser = session?.user ?? null;
+      setUser((prev) => (prev?.id === nextUser?.id ? prev : nextUser));
+      if (nextUser) {
+        fetchProfile(nextUser.id);
       } else {
         setProfile(null);
       }
       setLoading(false);
     });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const signInWithGoogle = async (next?: string) => {
-    const rawBase = import.meta.env.BASE_URL || "/";
-    const base = rawBase.endsWith("/") ? rawBase : `${rawBase}/`;
-    const callbackUrl = new URL(`${base}auth/callback`, window.location.origin);
-    if (next) {
-      callbackUrl.searchParams.set("next", next);
-    }
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: callbackUrl.toString(),
-      },
-    });
+    auth.signInWithGoogle(next);
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await auth.signOut();
     setUser(null);
     setProfile(null);
   };

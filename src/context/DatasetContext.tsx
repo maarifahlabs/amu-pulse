@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/api";
 import { electionSchedule } from "@/lib/election-schedule";
 import type { Candidate, CandidateAnswer, Dataset, ElectionEvent, Issue, Manifesto, Position } from "@/lib/types";
 
@@ -8,9 +8,6 @@ export interface TrendingRow {
   daily_views: number;
   total_views: number;
 }
-
-const CANDIDATE_COLUMNS =
-  "id, slug, profile_id, position_id, ballot_number, name, department, faculty, bio, photo_url, verification_status, official_source_url";
 
 interface DatasetContextType {
   dataset: Dataset | null;
@@ -41,6 +38,13 @@ export function DatasetProvider({ children }: { children: React.ReactNode }) {
 
   const loadData = useCallback(async () => {
     try {
+      // A failed section loads as empty instead of blanking the whole site.
+      const load = <T,>(path: string) =>
+        api.get<T>(path).then(
+          (data) => ({ data }),
+          () => ({ data: null as T | null }),
+        );
+
       const [
         positionsRes,
         candidatesRes,
@@ -51,17 +55,17 @@ export function DatasetProvider({ children }: { children: React.ReactNode }) {
         trendingRes,
         votesRes,
       ] = await Promise.all([
-        supabase.from("positions").select("id, slug, title, description, sort_order").order("sort_order"),
-        supabase.from("candidates").select(CANDIDATE_COLUMNS).order("ballot_number").order("name"),
-        supabase.from("manifestos").select("id, candidate_id, content, source_url, published_at").order("published_at", { ascending: false }),
-        supabase.from("issues").select("id, slug, title, description, context, category, published_at").order("published_at", { ascending: false }),
-        supabase.from("candidate_answers").select("id, candidate_id, issue_id, answer, source_url, updated_at"),
-        supabase.from("election_events").select("id, title, description, kind, starts_at, source_url, verified_at").order("starts_at"),
-        supabase.rpc("trending_candidates", { p_limit: 5 }),
-        supabase.rpc("get_candidate_vote_counts"),
+        load<Position[]>("/positions"),
+        load<Candidate[]>("/candidates"),
+        load<Manifesto[]>("/manifestos"),
+        load<Issue[]>("/issues"),
+        load<CandidateAnswer[]>("/candidate-answers"),
+        load<ElectionEvent[]>("/election-events"),
+        load<TrendingRow[]>("/candidates/trending?limit=5"),
+        load<{ candidate_id: string; vote_count: number }[]>("/votes/counts"),
       ]);
 
-      // Populate vote counts dictionary directly from Supabase RPC
+      // Populate vote counts dictionary
       const counts: Record<string, number> = {};
       if (votesRes.data && Array.isArray(votesRes.data)) {
         for (const row of votesRes.data) {

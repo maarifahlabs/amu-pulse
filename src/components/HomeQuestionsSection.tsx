@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { api } from "@/lib/api";
 import { getRecentApprovedQuestions } from "@/lib/data";
 import { useAuth } from "@/context/AuthContext";
 import { formatDate } from "@/lib/format";
@@ -39,24 +39,12 @@ export function HomeQuestionsSection({ issues }: HomeQuestionsSectionProps) {
     setSubmitMsg("");
 
     try {
-      const { data, error } = await supabase.rpc("submit_student_question", {
-        p_issue_id: selectedIssueId,
-        p_question: questionText.trim(),
-      });
-
-      if (error) {
-        setSubmitStatus("error");
-        setSubmitMsg(error.message);
-      } else if (data && !data.success) {
-        setSubmitStatus("error");
-        setSubmitMsg(data.error || "Failed to submit question.");
-      } else {
-        setSubmitStatus("ok");
-        setSubmitMsg("Your question has been submitted for moderation. It will appear here once approved.");
-        setQuestionText("");
-        setSelectedIssueId("");
-        setFormOpen(false);
-      }
+      await api.post("/questions", { issue_id: selectedIssueId, question: questionText.trim() });
+      setSubmitStatus("ok");
+      setSubmitMsg("Your question has been submitted for moderation. It will appear here once approved.");
+      setQuestionText("");
+      setSelectedIssueId("");
+      setFormOpen(false);
     } catch (err) {
       setSubmitStatus("error");
       setSubmitMsg(err instanceof Error ? err.message : "Submission failed.");

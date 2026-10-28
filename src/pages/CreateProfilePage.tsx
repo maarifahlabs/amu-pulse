@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useDataset } from "@/hooks/useDataset";
-import { supabase } from "@/lib/supabase";
-import { slugify } from "@/lib/validations";
+import { api } from "@/lib/api";
 
 export function CreateProfilePage() {
   const { user } = useAuth();
@@ -43,28 +42,16 @@ export function CreateProfilePage() {
     setSubmitting(true);
     setError(null);
 
-    const baseSlug = slugify(name) || "candidate";
-    const candidateId = crypto.randomUUID();
-
     try {
-      const { error: insertError } = await supabase.from("candidates").insert({
-        id: candidateId,
-        slug: `${baseSlug}-${Date.now().toString().slice(-4)}`,
-        profile_id: user.id,
-        position_id: positionId,
+      // The API creates the profile as unverified and sets the account's display name and role.
+      await api.post("/me/candidate", {
         name,
+        position_id: positionId,
         department: department || null,
         faculty: faculty || null,
         bio,
-        verification_status: "unverified",
       });
-
-      if (insertError) {
-        setError(insertError.message);
-      } else {
-        await supabase.from("profiles").update({ display_name: name, role: "candidate" }).eq("id", user.id);
-        navigate("/candidate/dashboard");
-      }
+      navigate("/candidate/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Profile creation failed.");
     } finally {
