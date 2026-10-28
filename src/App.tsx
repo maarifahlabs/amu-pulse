@@ -25,6 +25,7 @@ import { ContactPage } from "@/pages/ContactPage";
 import { AdminDashboardPage } from "@/pages/AdminDashboardPage";
 import { AdminLoginPage } from "@/pages/AdminLoginPage";
 import { AdminGate } from "@/pages/AdminGate";
+import { MaintenancePage } from "@/pages/MaintenancePage";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -35,7 +36,23 @@ function ScrollToTop() {
 }
 
 function AppContent() {
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const { pathname, search } = location;
+
+  // Check if maintenance mode is active (enabled by default or via VITE_MAINTENANCE_MODE)
+  const isMaintenanceConfigured = import.meta.env.VITE_MAINTENANCE_MODE !== "false";
+  
+  // Optional admin bypass via URL ?bypass=amuadmin or stored preview flag
+  const searchParams = new URLSearchParams(search);
+  if (searchParams.get("bypass") === "amuadmin") {
+    localStorage.setItem("amu_maintenance_bypass", "true");
+  }
+  const isBypassed = localStorage.getItem("amu_maintenance_bypass") === "true";
+
+  if (isMaintenanceConfigured && !isBypassed) {
+    return <MaintenancePage />;
+  }
+
   const isAdminDashboard = pathname.startsWith("/admin/dashboard");
   const isAdminLogin = pathname.startsWith("/admin/login") || pathname === "/admin";
 
