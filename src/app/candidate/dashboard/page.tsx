@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { signOut } from "@/actions/auth";
 import { submitAnswer, submitManifesto, submitProfileUpdate } from "@/actions/candidates";
+import { CandidateCampaignHub } from "@/components/CandidateCampaignHub";
 import { ClaimSteps } from "@/components/ClaimSteps";
 import { FlashMessage } from "@/components/FlashMessage";
 import { PhotoField } from "@/components/PhotoField";
@@ -125,6 +126,7 @@ interface LinkedCandidateRow {
   bio_pending: string | null;
   profile_update_status: string | null;
   verification_status: string;
+  positions?: { title: string } | null;
 }
 
 async function LinkedCandidate({ candidate }: { candidate: LinkedCandidateRow }) {
@@ -149,6 +151,12 @@ async function LinkedCandidate({ candidate }: { candidate: LinkedCandidateRow })
         </div>
         <Link href={`/candidates/${candidate.slug}`} className="btn-secondary">View public profile</Link>
       </section>
+
+      <CandidateCampaignHub
+        candidate={candidate}
+        position={candidate.positions}
+        manifesto={manifesto}
+      />
 
       <section className="card space-y-3">
         <div className="flex items-center justify-between">

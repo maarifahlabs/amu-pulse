@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
+import { CandidateCampaignHub } from "@/components/CandidateCampaignHub";
 import { CompletenessIndicator } from "@/components/CompletenessIndicator";
 import { LiveVoteCount } from "@/components/VoteCounts";
 import { NameWithBadge } from "@/components/NameWithBadge";
@@ -77,6 +78,13 @@ export default async function CandidatePage({ params }: Props) {
           </Link>
         )}
       </div>
+
+      <CandidateCampaignHub
+        candidate={candidate}
+        position={position}
+        manifesto={manifesto}
+        votes={votes}
+      />
 
       <section className="card space-y-2">
         <h2 className="text-lg font-bold">About</h2>
