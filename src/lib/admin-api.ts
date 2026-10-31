@@ -180,3 +180,35 @@ export async function fetchAdminAuditLogs(limit = 60): Promise<AdminAuditLogItem
     return [];
   }
 }
+
+// -------------------------------------------------------------
+// MARQUEE UPDATES API
+// -------------------------------------------------------------
+
+export interface AdminMarqueeItem {
+  id: string;
+  text: string;
+  link: string | null;
+  isActive?: boolean;
+  sortOrder?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export function fetchAdminMarquee(): Promise<AdminMarqueeItem[]> {
+  return api.get<AdminMarqueeItem[]>("/admin/marquee");
+}
+
+export function createAdminMarquee(
+  text: string,
+  link?: string,
+): Promise<{ success: boolean; error?: string; item?: AdminMarqueeItem }> {
+  return action(async () => {
+    const item = await api.post<AdminMarqueeItem>("/admin/marquee", { text, link: link?.trim() || undefined });
+    return { item };
+  });
+}
+
+export function deleteAdminMarquee(id: string): Promise<{ success: boolean; error?: string }> {
+  return action(() => api.delete(`/admin/marquee/${id}`));
+}

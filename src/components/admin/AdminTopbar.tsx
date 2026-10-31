@@ -36,6 +36,10 @@ const TAB_TITLES: Record<AdminTab, { title: string; subtitle: string }> = {
     title: "Campus Issues & Agendas",
     subtitle: "Monitor student election issues and candidate stance coverage.",
   },
+  marquee: {
+    title: "Live Ticker & Announcements",
+    subtitle: "Manage dynamic breaking updates scrolling on the website top marquee.",
+  },
   users: {
     title: "Student & User Accounts",
     subtitle: "Directory of registered student accounts, credentials, and access roles.",
