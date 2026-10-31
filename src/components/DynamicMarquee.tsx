@@ -7,7 +7,7 @@ import { formatDate } from "@/lib/format";
 export interface MarqueeItem {
   id: string;
   badge: string;
-  badgeColor?: "red" | "green" | "gold" | "blue";
+  badgeColor?: "red" | "green" | "gold" | "blue" | string;
   text: string;
   link?: string;
 }
