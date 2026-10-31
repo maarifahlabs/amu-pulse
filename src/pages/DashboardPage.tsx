@@ -186,12 +186,14 @@ export function DashboardPage() {
         </div>
       ) : linkedCandidate ? (
         <div className="space-y-6">
+          {/* Campaign & Reminder Hub temporarily disabled
           <CandidateCampaignHub
             candidate={linkedCandidate}
             position={linkedCandidate.positions}
             manifesto={{ content: manifesto }}
             votes={linkedCandidate?.id ? (voteCounts[linkedCandidate.id] ?? 0) : 0}
           />
+          */}
 
           <div className="card space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -255,7 +257,7 @@ export function DashboardPage() {
                     Ballot Serial Number (نمبر شمار)
                   </h3>
                   <p className="text-xs text-slate-600 max-w-xl leading-relaxed">
-                    Set your official serial number assigned on the AMUSU election ballot. It appears in the green box at the top right of your candidate card and in your email campaign headers.
+                    Set your official serial number assigned on the AMUSU election ballot. It appears in the green square box at the top right of your candidate card and on your profile.
                   </p>
                 </div>
 
