@@ -34,6 +34,7 @@ import { AdminPositionsTab } from "@/components/admin/AdminPositionsTab";
 import { AdminIssuesTab } from "@/components/admin/AdminIssuesTab";
 import { AdminUsersTab } from "@/components/admin/AdminUsersTab";
 import { AdminAuditTab } from "@/components/admin/AdminAuditTab";
+import { AdminMarqueeTab } from "@/components/admin/AdminMarqueeTab";
 
 export function AdminDashboardPage() {
   const { user, profile, loading: authLoading, signOut } = useAuth();
@@ -467,6 +468,10 @@ export function AdminDashboardPage() {
 
           {activeTab === "issues" && (
             <AdminIssuesTab issues={ds?.issues || []} />
+          )}
+
+          {activeTab === "marquee" && (
+            <AdminMarqueeTab />
           )}
 
           {activeTab === "users" && (

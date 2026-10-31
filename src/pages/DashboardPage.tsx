@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { CandidateCampaignHub } from "@/components/CandidateCampaignHub";
 import { CandidatePhotoUpload } from "@/components/CandidatePhotoUpload";
 import { NameWithBadge } from "@/components/NameWithBadge";
 import { YourVotes } from "@/components/YourVotes";
@@ -9,7 +10,7 @@ import { useDataset } from "@/hooks/useDataset";
 
 export function DashboardPage() {
   const { user, profile, loading: authLoading, signOut } = useAuth();
-  const { dataset: ds } = useDataset();
+  const { dataset: ds, voteCounts, refresh } = useDataset();
   const navigate = useNavigate();
 
   const [linkedCandidate, setLinkedCandidate] = useState<any | null>(null);
@@ -18,12 +19,16 @@ export function DashboardPage() {
 
   // Candidate edit state
   const [bio, setBio] = useState("");
+  const [ballotNumber, setBallotNumber] = useState("");
   const [manifesto, setManifesto] = useState("");
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [savingBio, setSavingBio] = useState(false);
+  const [savingBallotNumber, setSavingBallotNumber] = useState(false);
   const [savingManifesto, setSavingManifesto] = useState(false);
   const [savingAnswer, setSavingAnswer] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [ballotError, setBallotError] = useState<string | null>(null);
+  const [ballotSuccess, setBallotSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -42,6 +47,7 @@ export function DashboardPage() {
       if (candidate) {
         setLinkedCandidate(candidate);
         setBio(candidate.bio || "");
+        setBallotNumber(candidate.ballot_number != null ? String(candidate.ballot_number) : "");
       }
       if (claims) {
         setCandidateClaims(claims);
@@ -56,6 +62,42 @@ export function DashboardPage() {
       loadCandidateDetails(user.id);
     }
   }, [user?.id]);
+
+  async function handleSaveBallotNumber(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingBallotNumber(true);
+    setBallotError(null);
+    setBallotSuccess(null);
+    try {
+      const trimmed = ballotNumber.trim();
+      const parsed = trimmed === "" ? null : parseInt(trimmed, 10);
+      if (parsed !== null && (isNaN(parsed) || parsed < 1)) {
+        setBallotError("Please enter a valid positive number (e.g. 1, 2, 3...).");
+        setSavingBallotNumber(false);
+        return;
+      }
+      const res = await api.put<{ success: boolean; ballot_number: number | null }>("/me/candidate/ballot-number", {
+        ballot_number: parsed,
+      });
+      setLinkedCandidate((prev: any) => (prev ? { ...prev, ballot_number: res.ballot_number } : prev));
+      setBallotNumber(res.ballot_number != null ? String(res.ballot_number) : "");
+      setBallotSuccess(
+        res.ballot_number != null
+          ? `Official Ballot Serial #${res.ballot_number} saved successfully!`
+          : "Ballot serial number cleared.",
+      );
+      try {
+        await refresh();
+      } catch {
+        // Dataset refresh non-critical
+      }
+      setTimeout(() => setBallotSuccess(null), 4000);
+    } catch (err: any) {
+      setBallotError(err instanceof Error ? err.message : "Failed to update ballot serial number.");
+    } finally {
+      setSavingBallotNumber(false);
+    }
+  }
 
   async function handleSaveBio(e: React.FormEvent) {
     e.preventDefault();
@@ -144,6 +186,13 @@ export function DashboardPage() {
         </div>
       ) : linkedCandidate ? (
         <div className="space-y-6">
+          <CandidateCampaignHub
+            candidate={linkedCandidate}
+            position={linkedCandidate.positions}
+            manifesto={{ content: manifesto }}
+            votes={linkedCandidate?.id ? (voteCounts[linkedCandidate.id] ?? 0) : 0}
+          />
+
           <div className="card space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
@@ -189,6 +238,85 @@ export function DashboardPage() {
                 </div>
               </div>
             )}
+
+            {/* Official Ballot Serial Number Box & Editor */}
+            <div className="rounded-xl border border-brand-200/90 bg-gradient-to-br from-brand-50/60 via-white to-slate-50/50 p-4 sm:p-5 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="badge bg-brand-600 text-white font-bold text-xs uppercase tracking-wider">
+                      Official Ballot
+                    </span>
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      Serial Number
+                    </span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-bold font-display text-slate-900">
+                    Ballot Serial Number (نمبر شمار)
+                  </h3>
+                  <p className="text-xs text-slate-600 max-w-xl leading-relaxed">
+                    Set your official serial number assigned on the AMUSU election ballot. It appears in the green box at the top right of your candidate card and in your email campaign headers.
+                  </p>
+                </div>
+
+                {/* Live Preview of the Green Serial Number Box */}
+                <div className="shrink-0 flex items-center sm:justify-end">
+                  <div
+                    className="flex flex-col items-center justify-center rounded-xl bg-brand-600 px-4 py-1.5 text-white shadow-sm border border-brand-700 min-w-[56px]"
+                    title="How your serial number appears on candidate cards"
+                  >
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-100 leading-none">
+                      Ballot
+                    </span>
+                    <span className="text-xl font-black font-mono leading-tight mt-0.5">
+                      {linkedCandidate.ballot_number != null
+                        ? `#${String(linkedCandidate.ballot_number).padStart(2, "0")}`
+                        : "—"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {ballotError && (
+                <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-800 flex items-center gap-2">
+                  <span className="text-base leading-none">⚠️</span>
+                  <span>{ballotError}</span>
+                </div>
+              )}
+
+              {ballotSuccess && (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-medium text-emerald-800 flex items-center gap-2">
+                  <span className="text-base leading-none">✓</span>
+                  <span>{ballotSuccess}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSaveBallotNumber} className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 pt-1">
+                <div className="w-full sm:w-48">
+                  <label htmlFor="ballot_number" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Enter Serial Number
+                  </label>
+                  <input
+                    id="ballot_number"
+                    type="number"
+                    min="1"
+                    max="999"
+                    placeholder="e.g. 1, 2, 3..."
+                    value={ballotNumber}
+                    onChange={(e) => setBallotNumber(e.target.value)}
+                    className="input font-mono font-bold text-base"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={savingBallotNumber}
+                  className="btn-primary shrink-0 cursor-pointer"
+                >
+                  {savingBallotNumber ? "Saving serial number..." : "Save Serial Number"}
+                </button>
+              </form>
+            </div>
 
             <form onSubmit={handleSaveBio} className="space-y-3">
               <label htmlFor="bio" className="label font-semibold">Your Bio / Background</label>

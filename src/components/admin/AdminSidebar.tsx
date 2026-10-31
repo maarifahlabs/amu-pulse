@@ -7,6 +7,7 @@ export type AdminTab =
   | "questions"
   | "positions"
   | "issues"
+  | "marquee"
   | "users"
   | "audit";
 
@@ -112,6 +113,16 @@ export function AdminSidebar({
             clipRule="evenodd"
           />
           <path d="M15 7h1a2 2 0 012 2v5.5a1.5 1.5 0 01-3 0V7z" />
+        </svg>
+      ),
+    },
+    {
+      id: "marquee" as AdminTab,
+      label: "Live Ticker Updates",
+      badge: null,
+      icon: (
+        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v.114A4.502 4.502 0 004 5a4.5 4.5 0 000 9c.758 0 1.472-.189 2-.524V17a1 1 0 001 1h2a1 1 0 001-1v-5.06l7.804 1.561A1 1 0 0019 12.518V4a1 1 0 00-1-1zM4 12a2.5 2.5 0 110-5 2.5 2.5 0 010 5z" />
         </svg>
       ),
     },

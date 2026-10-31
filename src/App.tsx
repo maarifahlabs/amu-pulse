@@ -4,6 +4,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { DatasetProvider } from "@/context/DatasetContext";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { DynamicMarquee } from "@/components/DynamicMarquee";
 
 // Pages
 import { HomePage } from "@/pages/HomePage";
@@ -66,7 +67,12 @@ function AppContent() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
-      {!isAdminLogin && <Header />}
+      {!isAdminLogin && (
+        <>
+          <Header />
+          <DynamicMarquee />
+        </>
+      )}
       <main id="main" className={`flex-1 ${isAdminLogin ? "" : "pb-16"}`}>
         <Routes>
           <Route path="/" element={<HomePage />} />

@@ -297,3 +297,37 @@
   60%      { transform: translateX(-3px); }
   80%      { transform: translateX(2px); }
 }
+
+
+/* Dynamic Single-Line Continuous Marquee */
+.dynamic-marquee {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  user-select: none;
+  background: #7f1d1d; /* Deep Red */
+  color: #fff1f2;
+  border-bottom: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.dynamic-marquee-track {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  white-space: nowrap;
+  animation: marquee-scroll 70s linear infinite;
+  min-width: 100%;
+}
+
+.dynamic-marquee:hover .dynamic-marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}

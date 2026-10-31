@@ -27,14 +27,38 @@ export function CandidateCard({
   votes?: number | null;
 }) {
   const place = candidatePlace(candidate);
+  const rawSerial = candidate.ballot_number;
+  const hasSerial =
+    rawSerial !== null &&
+    rawSerial !== undefined &&
+    String(rawSerial).trim() !== "" &&
+    Number(rawSerial) > 0;
+
   return (
-    <Link to={`/candidates/${candidate.slug}`} className="card flex gap-4 transition hover:border-brand-500 hover:shadow-md">
+    <Link
+      to={`/candidates/${candidate.slug}`}
+      className="card relative flex gap-4 transition hover:border-brand-500 hover:shadow-md"
+    >
+      {/* Official Ballot Serial Number Square Box at Top Right with Green Background */}
+      {hasSerial && (
+        <div
+          className="absolute top-3.5 right-3.5 flex h-12 w-12 flex-col items-center justify-center rounded-xl bg-brand-600 text-white shadow-md border border-brand-700/80 shrink-0 select-none z-10"
+          title={`Official Ballot Serial Number: ${rawSerial}`}
+        >
+          <span className="text-[8px] font-black uppercase tracking-wider text-emerald-100 leading-none">
+            SL NO.
+          </span>
+          <span className="text-base sm:text-lg font-black font-mono leading-none mt-1 text-white">
+            {String(rawSerial).padStart(2, "0")}
+          </span>
+        </div>
+      )}
+
       <Avatar name={candidate.name} photoUrl={candidate.photo_url} />
-      <div className="min-w-0 flex-1 space-y-2">
+      <div className={`min-w-0 flex-1 space-y-2 ${hasSerial ? "pr-14" : ""}`}>
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">
             {position?.title}
-            {candidate.ballot_number !== null && ` · No. ${String(candidate.ballot_number).padStart(2, "0")}`}
           </p>
           <h3 className="text-base font-semibold">
             <NameWithBadge
