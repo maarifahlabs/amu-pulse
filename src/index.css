@@ -315,7 +315,7 @@
   flex-shrink: 0;
   align-items: center;
   white-space: nowrap;
-  animation: marquee-scroll 50s linear infinite;
+  animation: marquee-scroll 25s linear infinite;
   min-width: 100%;
 }
 

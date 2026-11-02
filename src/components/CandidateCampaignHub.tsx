@@ -305,7 +305,7 @@ export function CandidateCampaignHub({
             Outreach, Campaigning &amp; Reminders
           </h2>
           <p className="text-sm text-slate-600">
-            Reach students across AMU with your manifesto or mobilize your confirmed voters on polling day.
+            Reach students across AMU with your manifesto or remind your confirmed voters before polling day.
           </p>
         </div>
 
@@ -424,7 +424,7 @@ export function CandidateCampaignHub({
           ) : (
             <div className="space-y-4">
               <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4">
-                <h3 className="font-bold text-amber-900">Mobilize Your Voters on Polling Day</h3>
+                <h3 className="font-bold text-amber-900">Remind Your Voters before Polling Day</h3>
                 <p className="mt-1 text-sm text-amber-800">
                   Urge students who voted for you on AMU Pulse to cast their actual ballot at polling booths.
                   <strong> This email goes strictly to your confirmed voters only.</strong>
