@@ -220,14 +220,12 @@ export function CandidateDetailPage() {
         )}
       </div>
 
-      {/* Campaign & Reminder Hub temporarily disabled
       <CandidateCampaignHub
         candidate={candidate}
         position={position}
         manifesto={manifesto}
         votes={votes}
       />
-      */}
 
       <section className="card space-y-2">
         <h2 className="text-lg font-bold font-display">About</h2>
