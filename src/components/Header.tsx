@@ -11,16 +11,13 @@ const NAV = [
 
 function VoteNow() {
   return (
-    <Link to="/vote" className="vote-now">
-      <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.2">
-        <path d="M4 10.5 8 14.5 16 6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      VOTE NOW
-      <span className="vote-live">
-        <span className="vote-live-dot" />
-        LIVE
-      </span>
-    </Link>
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-400 border border-slate-200 select-none cursor-not-allowed"
+      title="Voting concluded on 5 November 2026. Official results have been announced."
+    >
+      <span className="h-2 w-2 rounded-full bg-slate-400" />
+      VOTING CONCLUDED
+    </span>
   );
 }
 

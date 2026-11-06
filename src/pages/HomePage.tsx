@@ -59,12 +59,12 @@ export function HomePage() {
   return (
     <>
       {/* Hero Announcement Banner */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-brand-900 via-brand-800 to-slate-950 text-white border-b border-amber-500/30">
+      <section className="relative overflow-hidden bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 text-white border-b border-brand-500/40">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,196,0,0.15),transparent_50%)] pointer-events-none" />
         <div className="container-page relative py-12 sm:py-16 space-y-6">
-          <div className="inline-flex items-center gap-2 rounded-full bg-amber-400/20 px-4 py-1.5 border border-amber-400/40 text-amber-300 text-xs font-bold uppercase tracking-widest backdrop-blur-sm">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 border border-white/20 text-white text-xs font-bold uppercase tracking-widest backdrop-blur-sm shadow-xs">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400" />
             </span>
             Official Results Declared · AMUSU 2026-27
@@ -73,11 +73,11 @@ export function HomePage() {
           <div className="max-w-3xl space-y-3">
             <h1 className="text-3xl font-extrabold sm:text-5xl font-display tracking-tight text-white">
               AMUSU Election 2026-27 <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-300">
                 Official Election Results
               </span>
             </h1>
-            <p className="text-base sm:text-lg text-brand-100 max-w-2xl leading-relaxed">
+            <p className="text-base sm:text-lg text-brand-50 max-w-2xl leading-relaxed">
               Counting has concluded and the official results have been notified by the Office of the Chief Election Officer,
               Aligarh Muslim University. Meet your newly elected Students&apos; Union representatives and University Court members.
             </p>
