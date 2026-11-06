@@ -28,7 +28,7 @@ export function WinnerCard({ candidate, position, highlightChair }: WinnerCardPr
         className={`h-2 w-full ${
           isChair
             ? "bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600"
-            : "bg-gradient-to-r from-brand-600 to-emerald-500"
+            : "bg-gradient-to-r from-brand-600 to-brand-500"
         }`}
       />
 
@@ -40,7 +40,7 @@ export function WinnerCard({ candidate, position, highlightChair }: WinnerCardPr
             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black uppercase tracking-wider ${
               isChair
                 ? "bg-amber-500 text-slate-950 shadow-xs"
-                : "bg-emerald-600 text-white shadow-xs"
+                : "bg-brand-600 text-white shadow-xs"
             }`}
           >
             <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5" aria-hidden="true">
@@ -67,7 +67,7 @@ export function WinnerCard({ candidate, position, highlightChair }: WinnerCardPr
               className={`rounded-full p-1 ${
                 isChair
                   ? "bg-gradient-to-tr from-amber-400 to-yellow-200 ring-2 ring-amber-400"
-                  : "bg-gradient-to-tr from-brand-500 to-emerald-300 ring-2 ring-brand-400"
+                  : "bg-gradient-to-tr from-brand-600 to-brand-400 ring-2 ring-brand-500"
               }`}
             >
               <Avatar name={candidate.name} photoUrl={candidate.photo_url} />

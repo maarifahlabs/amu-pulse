@@ -83,26 +83,6 @@ export function HomePage() {
               Aligarh Muslim University. Meet your newly elected Students&apos; Union representatives and University Court members.
             </p>
           </div>
-
-          {/* Quick Stats Banner */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 max-w-2xl">
-            <div className="rounded-xl bg-white/10 backdrop-blur border border-white/10 p-3 text-center">
-              <span className="block text-2xl font-black text-amber-300 font-mono">1</span>
-              <span className="text-[11px] font-bold text-brand-200 uppercase tracking-wide">President</span>
-            </div>
-            <div className="rounded-xl bg-white/10 backdrop-blur border border-white/10 p-3 text-center">
-              <span className="block text-2xl font-black text-amber-300 font-mono">1</span>
-              <span className="text-[11px] font-bold text-brand-200 uppercase tracking-wide">Vice-President</span>
-            </div>
-            <div className="rounded-xl bg-white/10 backdrop-blur border border-white/10 p-3 text-center">
-              <span className="block text-2xl font-black text-amber-300 font-mono">1</span>
-              <span className="text-[11px] font-bold text-brand-200 uppercase tracking-wide">Hony. Secretary</span>
-            </div>
-            <div className="rounded-xl bg-white/10 backdrop-blur border border-white/10 p-3 text-center">
-              <span className="block text-2xl font-black text-amber-300 font-mono">10</span>
-              <span className="text-[11px] font-bold text-brand-200 uppercase tracking-wide">Cabinet Members</span>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -151,7 +131,7 @@ export function HomePage() {
         <section className="space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 border-b border-slate-200 pb-3">
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600">
+              <span className="text-xs font-bold uppercase tracking-wider text-brand-700">
                 10 Elected Cabinet Members
               </span>
               <h2 className="text-2xl font-bold font-display text-slate-900">
