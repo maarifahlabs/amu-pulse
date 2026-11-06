@@ -16,6 +16,9 @@ interface CandidateModalProps {
     photo_url?: string | null;
     source_url?: string | null;
     verification_status: VerificationStatus;
+    is_winner?: boolean;
+    official_votes?: number | null;
+    winner_rank?: number | null;
   }) => Promise<void>;
   candidate?: AdminCandidateItem | null;
   positions: Position[];
@@ -41,6 +44,12 @@ export function CandidateModal({
   const [photoUrl, setPhotoUrl] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>("verified");
+
+  // Official Result Fields
+  const [isWinner, setIsWinner] = useState(false);
+  const [officialVotes, setOfficialVotes] = useState<string>("");
+  const [winnerRank, setWinnerRank] = useState<string>("");
+
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -54,6 +63,9 @@ export function CandidateModal({
       setPhotoUrl(candidate.photo_url || "");
       setSourceUrl(candidate.official_source_url || "");
       setVerificationStatus(candidate.verification_status || "verified");
+      setIsWinner(Boolean(candidate.is_winner));
+      setOfficialVotes(candidate.official_votes != null ? String(candidate.official_votes) : "");
+      setWinnerRank(candidate.winner_rank != null ? String(candidate.winner_rank) : "");
     } else {
       setName("");
       setPositionId(positions[0]?.id || "");
@@ -64,6 +76,9 @@ export function CandidateModal({
       setPhotoUrl("");
       setSourceUrl("");
       setVerificationStatus("verified");
+      setIsWinner(false);
+      setOfficialVotes("");
+      setWinnerRank("");
     }
     setFormError(null);
   }, [candidate, positions, isOpen]);
@@ -89,6 +104,18 @@ export function CandidateModal({
       return;
     }
 
+    const votesNum = officialVotes.trim() ? Number(officialVotes.trim()) : null;
+    if (officialVotes.trim() && (isNaN(Number(officialVotes)) || Number(officialVotes) < 0)) {
+      setFormError("Official votes must be a non-negative number.");
+      return;
+    }
+
+    const rankNum = winnerRank.trim() ? Number(winnerRank.trim()) : null;
+    if (winnerRank.trim() && (isNaN(Number(winnerRank)) || Number(winnerRank) < 1)) {
+      setFormError("Winner rank must be a positive number (e.g. 1, 2, 3).");
+      return;
+    }
+
     try {
       await onSubmit({
         id: candidate?.id,
@@ -101,6 +128,9 @@ export function CandidateModal({
         photo_url: photoUrl.trim() || null,
         source_url: sourceUrl.trim() || null,
         verification_status: verificationStatus,
+        is_winner: isWinner,
+        official_votes: votesNum,
+        winner_rank: rankNum,
       });
       onClose();
     } catch (err) {
@@ -115,12 +145,12 @@ export function CandidateModal({
         <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/80 px-6 py-4">
           <div>
             <h2 className="text-base font-bold font-display text-slate-900">
-              {isEdit ? "Edit Candidate Details" : "Register New Candidate"}
+              {isEdit ? "Edit Candidate & Election Results" : "Register New Candidate / Court Member"}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               {isEdit
                 ? `Updating official record for ${candidate?.name}`
-                : "Add an official contestant to the AMUSU ballot roster"}
+                : "Add a contestant or elected court member to the university roster"}
             </p>
           </div>
           <button
@@ -133,12 +163,71 @@ export function CandidateModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
           {formError && (
             <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-xs font-semibold text-red-800">
               {formError}
             </div>
           )}
+
+          {/* Winner / Elected Section */}
+          <div className="rounded-xl border border-amber-300 bg-gradient-to-r from-amber-50 to-yellow-50/50 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                  🏆 Official Winner Status
+                </span>
+                <p className="text-[11px] text-amber-800">
+                  Mark as officially elected to display on the Home Page Winners showcase.
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isWinner}
+                  onChange={(e) => setIsWinner(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+              </label>
+            </div>
+
+            {/* Official Vote Count & Rank */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-amber-200/60">
+              <div>
+                <label htmlFor="cand-official-votes" className="label text-[11px] font-bold text-slate-800">
+                  Actual Polled Votes Count
+                </label>
+                <input
+                  id="cand-official-votes"
+                  type="number"
+                  min="0"
+                  value={officialVotes}
+                  onChange={(e) => setOfficialVotes(e.target.value)}
+                  placeholder="e.g. 7797"
+                  className="input text-xs bg-white font-mono"
+                />
+                <p className="text-[10px] text-slate-500 mt-1">Kept separate from platform votes.</p>
+              </div>
+
+              <div>
+                <label htmlFor="cand-winner-rank" className="label text-[11px] font-bold text-slate-800">
+                  Winner Rank # (e.g. 1–10)
+                </label>
+                <input
+                  id="cand-winner-rank"
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={winnerRank}
+                  onChange={(e) => setWinnerRank(e.target.value)}
+                  placeholder="e.g. 1"
+                  className="input text-xs bg-white font-mono"
+                />
+                <p className="text-[10px] text-slate-500 mt-1">Controls sort position in Cabinet or Court cards.</p>
+              </div>
+            </div>
+          </div>
 
           {/* Full Name & Position */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -159,7 +248,7 @@ export function CandidateModal({
 
             <div>
               <label htmlFor="cand-pos" className="label text-xs">
-                Contesting Post <span className="text-red-500">*</span>
+                Contesting Post / Court Faculty <span className="text-red-500">*</span>
               </label>
               <select
                 id="cand-pos"
@@ -209,7 +298,7 @@ export function CandidateModal({
                 onChange={(e) => setVerificationStatus(e.target.value as VerificationStatus)}
                 className="input text-xs font-semibold"
               >
-                <option value="verified">Verified (Official Ballot)</option>
+                <option value="verified">Verified (Official Ballot / Winner)</option>
                 <option value="unverified">Unverified (Pending Review)</option>
                 <option value="rejected">Rejected</option>
               </select>
@@ -247,21 +336,6 @@ export function CandidateModal({
             </div>
           </div>
 
-          {/* Bio / Agenda */}
-          <div>
-            <label htmlFor="cand-bio" className="label text-xs">
-              Candidate Statement / Bio
-            </label>
-            <textarea
-              id="cand-bio"
-              rows={3}
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="Candidate background, qualifications, priorities, and vision..."
-              className="input text-xs"
-            />
-          </div>
-
           {/* Photo URL & Official Source URL */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -293,6 +367,21 @@ export function CandidateModal({
             </div>
           </div>
 
+          {/* Bio / Agenda */}
+          <div>
+            <label htmlFor="cand-bio" className="label text-xs">
+              Candidate Statement / Bio
+            </label>
+            <textarea
+              id="cand-bio"
+              rows={3}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Candidate background, priorities, and vision..."
+              className="input text-xs"
+            />
+          </div>
+
           {/* Footer Actions */}
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
             <button
@@ -311,8 +400,8 @@ export function CandidateModal({
               {isSubmitting
                 ? "Saving..."
                 : isEdit
-                ? "Save Candidate Changes"
-                : "Create Candidate Profile"}
+                ? "Save Changes"
+                : "Register Candidate / Court Winner"}
             </button>
           </div>
         </form>

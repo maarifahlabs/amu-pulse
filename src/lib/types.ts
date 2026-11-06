@@ -27,6 +27,9 @@ export interface Candidate {
   photo_url: string | null;
   verification_status: VerificationStatus;
   official_source_url: string | null;
+  is_winner?: boolean;
+  official_votes?: number | null;
+  winner_rank?: number | null;
 }
 
 export interface Manifesto {
