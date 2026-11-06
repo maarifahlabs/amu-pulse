@@ -1,196 +1,274 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Countdown } from "@/components/Countdown";
-import { ElectionTimeline } from "@/components/ElectionTimeline";
-import { CandidateCard } from "@/components/CandidateCard";
+import { WinnerCard } from "@/components/WinnerCard";
 import { IssueCard } from "@/components/IssueCard";
 import { HomeQuestionsSection } from "@/components/HomeQuestionsSection";
-import { completeness, issueResponseCount, pollingEvent, sortByVotes } from "@/lib/data";
-import { formatDate } from "@/lib/format";
+import { issueResponseCount } from "@/lib/data";
 import { useDataset } from "@/hooks/useDataset";
-
-const STEPS = [
-  { title: "Discover", text: "Browse the campus issues students care about and who is contesting.", href: "/candidates" },
-  { title: "Question", text: "Read candidates' published responses and submit your own questions.", href: "/issues" },
-  { title: "Compare", text: "See every candidate's answer side by side, presented equally.", href: "/compare" },
-  { title: "Vote", text: "Choose one candidate for each post, or up to 10 for Cabinet Member.", href: "/vote" },
-];
+import type { Candidate, Position } from "@/lib/types";
 
 export function HomePage() {
-  const { dataset: ds, voteCounts, loading } = useDataset();
+  const { dataset: ds, loading } = useDataset();
+  const [selectedCourtSlug, setSelectedCourtSlug] = useState<string>("all");
 
   if (loading || !ds) {
     return (
       <div className="container-page py-20 text-center">
         <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-brand-600 border-r-transparent" />
-        <p className="mt-4 text-sm text-slate-600 font-medium">Loading election data from Supabase…</p>
+        <p className="mt-4 text-sm text-slate-600 font-medium">Loading election results…</p>
       </div>
     );
   }
 
-  const polling = pollingEvent(ds);
+  // Position lookup map
+  const posMap = new Map<string, Position>();
+  for (const p of ds.positions) {
+    posMap.set(p.id, p);
+  }
+
+  // Executive Chair Winners: highest official_votes for each post
+  const getTopCandidateForPosition = (slug: string) => {
+    return ds.candidates
+      .filter((c) => posMap.get(c.position_id)?.slug === slug && c.official_votes != null)
+      .sort((a, b) => (b.official_votes ?? 0) - (a.official_votes ?? 0))[0];
+  };
+
+  const presidentWinner = getTopCandidateForPosition("president");
+  const vpWinner = getTopCandidateForPosition("vice-president");
+  const secWinner = getTopCandidateForPosition("honorary-secretary");
+
+  // Cabinet Member Winners: Top 10 by official_votes DESC
+  const cabinetWinners = ds.candidates
+    .filter((c) => posMap.get(c.position_id)?.slug === "cabinet-member" && c.official_votes != null)
+    .sort((a, b) => (b.official_votes ?? 0) - (a.official_votes ?? 0))
+    .slice(0, 10);
+
+  // University Court Winners: Top 1 (highest votes) for each faculty court position
+  const courtPositions = ds.positions.filter((p) => p.slug.startsWith("court-"));
+  const courtWinners = courtPositions
+    .map((pos) => getTopCandidateForPosition(pos.slug))
+    .filter((c): c is Candidate => Boolean(c))
+    .sort((a, b) => (b.official_votes ?? 0) - (a.official_votes ?? 0));
+
+  const filteredCourtWinners = selectedCourtSlug === "all"
+    ? courtWinners
+    : courtWinners.filter((c) => posMap.get(c.position_id)?.slug === selectedCourtSlug);
+
   const featured = ds.issues.slice(0, 6);
-  const trending = ds.positions
-    .map((position) => ({
-      position,
-      rows: sortByVotes(
-        ds.candidates.filter((candidate) => candidate.position_id === position.id),
-        voteCounts,
-      )
-        .slice(0, 3)
-        .map((candidate) => ({ candidate, votes: voteCounts[candidate.id] ?? 0 })),
-    }))
-    .filter((group) => group.rows.length > 0);
 
   return (
     <>
-      <section className="bg-gradient-to-br from-brand-700 to-brand-900 text-white">
-        <div className="container-page grid gap-8 py-12 sm:py-16 md:grid-cols-[1.4fr_1fr] md:items-center">
-          <div className="space-y-5">
-            <p className="text-sm font-semibold uppercase tracking-widest text-brand-100">
-              AMU Students&apos; Union (AMUSU) election 2026
-            </p>
-            <h1 className="text-3xl font-bold leading-tight sm:text-5xl font-display">
-              AMU Pulse
-              <span className="mt-2 block text-2xl font-semibold sm:text-4xl">
-                Your Campus. Your Questions. Your Choice.
+      {/* Hero Announcement Banner */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 text-white border-b border-brand-500/40">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,196,0,0.15),transparent_50%)] pointer-events-none" />
+        <div className="container-page relative py-12 sm:py-16 space-y-6">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 border border-white/20 text-white text-xs font-bold uppercase tracking-widest backdrop-blur-sm shadow-xs">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400" />
+            </span>
+            Official Results Declared · AMUSU 2026-27
+          </div>
+
+          <div className="max-w-3xl space-y-3">
+            <h1 className="text-3xl font-extrabold sm:text-5xl font-display tracking-tight text-white">
+              AMUSU Election 2026-27 <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-300">
+                Official Election Results
               </span>
             </h1>
-            <p className="max-w-xl text-brand-50">
-              AMU Pulse is an independent guide to the AMUSU election. Don&apos;t just know who is contesting.
-              Know what they stand for, compare their answers, and check the published dates.
+            <p className="text-base sm:text-lg text-brand-50 max-w-2xl leading-relaxed">
+              Counting has concluded and the official results have been notified by the Office of the Chief Election Officer,
+              Aligarh Muslim University. Meet your newly elected Students&apos; Union representatives and University Court members.
             </p>
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Link to="/issues" className="btn-primary bg-white text-brand-900 hover:bg-brand-50 shadow-md">
-                Explore issues
-              </Link>
-              <Link to="/compare" className="btn-secondary border-white/40 bg-transparent text-white hover:bg-white/10">
-                Compare candidates
-              </Link>
-            </div>
           </div>
-          {polling && (
-            <div className="space-y-3 rounded-2xl bg-white/10 backdrop-blur p-6 border border-white/10 shadow-lg">
-              <p className="text-sm font-semibold text-brand-100">Polling day · {formatDate(polling.starts_at)}</p>
-              <Countdown target={polling.starts_at} />
-              <p className="text-xs text-brand-100">Voting is 9 am to 5 pm, with a lunch break from 1 pm to 2 pm.</p>
+        </div>
+      </section>
+
+      {/* Main Winners Showcase */}
+      <main className="container-page py-10 space-y-12">
+        {/* 1. Executive Union Chairs (Top 3) */}
+        <section className="space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 border-b border-slate-200 pb-3">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-600">Executive Leadership</span>
+              <h2 className="text-2xl font-bold font-display text-slate-900">
+                Union Office Bearers
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 font-medium">
+              Elected across university-wide polling
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            {presidentWinner && (
+              <WinnerCard
+                candidate={presidentWinner}
+                position={posMap.get(presidentWinner.position_id)}
+                highlightChair
+              />
+            )}
+            {vpWinner && (
+              <WinnerCard
+                candidate={vpWinner}
+                position={posMap.get(vpWinner.position_id)}
+                highlightChair
+              />
+            )}
+            {secWinner && (
+              <WinnerCard
+                candidate={secWinner}
+                position={posMap.get(secWinner.position_id)}
+                highlightChair
+              />
+            )}
+          </div>
+        </section>
+
+        {/* 2. AMUSU Cabinet 2026-27 (10 Members) */}
+        <section className="space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 border-b border-slate-200 pb-3">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-brand-700">
+                10 Elected Cabinet Members
+              </span>
+              <h2 className="text-2xl font-bold font-display text-slate-900">
+                AMUSU Cabinet 2026–27
+              </h2>
+            </div>
+            <span className="text-xs font-semibold text-slate-500 bg-slate-100 rounded-full px-3 py-1">
+              Ranked by official votes secured
+            </span>
+          </div>
+
+          {cabinetWinners.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {cabinetWinners.map((candidate) => (
+                <WinnerCard
+                  key={candidate.id}
+                  candidate={candidate}
+                  position={posMap.get(candidate.position_id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-slate-500 text-sm">
+              No cabinet winners recorded yet. Add official winners in Admin Dashboard.
             </div>
           )}
-        </div>
-      </section>
+        </section>
 
-      <section className="container-page grid gap-4 py-10 sm:grid-cols-2 lg:grid-cols-4">
-        {STEPS.map((step, i) =>
-          step.href === "/vote" ? (
-            <Link
-              key={step.title}
-              to="/vote"
-              className="flex flex-col justify-between gap-4 rounded-2xl bg-brand-900 p-5 text-white shadow-sm transition hover:bg-brand-700"
-            >
-              <div>
-                <p className="text-sm font-bold text-[#f5c400]">0{i + 1}</p>
-                <h2 className="text-lg font-semibold">{step.title}</h2>
-                <p className="text-sm text-brand-50">{step.text}</p>
-              </div>
-              <span className="vote-now self-start">
-                <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.2">
-                  <path d="M4 10.5 8 14.5 16 6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                VOTE NOW
-                <span className="vote-live">
-                  <span className="vote-live-dot" />
-                  LIVE
-                </span>
-              </span>
-            </Link>
+        {/* 3. University Court Members (By Faculty) */}
+        <section className="space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 border-b border-slate-200 pb-3">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-brand-700">Faculty Representation</span>
+              <h2 className="text-2xl font-bold font-display text-slate-900">
+                University Court Members
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 font-medium">
+              Representatives elected from each AMU faculty to the University Court
+            </p>
+          </div>
+
+          {/* Faculty filter pills */}
+          {courtPositions.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setSelectedCourtSlug("all")}
+                className={`rounded-full px-3 py-1 text-xs font-bold transition ${
+                  selectedCourtSlug === "all"
+                    ? "bg-brand-700 text-white shadow-xs"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                All Faculties ({courtWinners.length})
+              </button>
+              {courtPositions.map((pos) => {
+                const count = courtWinners.filter((c) => c.position_id === pos.id).length;
+                return (
+                  <button
+                    key={pos.id}
+                    type="button"
+                    onClick={() => setSelectedCourtSlug(pos.slug)}
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                      selectedCourtSlug === pos.slug
+                        ? "bg-brand-700 text-white font-bold shadow-xs"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    {pos.title.replace("University Court — ", "")} {count > 0 ? `(${count})` : ""}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {filteredCourtWinners.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredCourtWinners.map((candidate) => (
+                <WinnerCard
+                  key={candidate.id}
+                  candidate={candidate}
+                  position={posMap.get(candidate.position_id)}
+                />
+              ))}
+            </div>
           ) : (
-            <Link key={step.title} to={step.href} className="card block transition hover:border-brand-600 hover:shadow-md">
-              <p className="text-sm font-bold text-brand-600">0{i + 1}</p>
-              <h2 className="text-lg font-semibold">{step.title}</h2>
-              <p className="text-sm text-slate-600">{step.text}</p>
-            </Link>
-          )
-        )}
-      </section>
+            <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-slate-500 text-sm">
+              <p className="font-semibold text-slate-700">No Court Member winners listed for this faculty yet.</p>
+              <p className="text-xs text-slate-400 mt-1">
+                Admin can add elected court representatives from the Admin Candidates tab.
+              </p>
+            </div>
+          )}
+        </section>
 
-      {trending.length > 0 && (
-        <section className="container-page space-y-6 pt-2">
-          <div className="flex items-end justify-between">
-            <h2 className="text-xl font-bold font-display">Trending by votes</h2>
-            <Link to="/candidates" className="text-sm font-semibold text-brand-700 hover:underline">
-              View all
+        {/* 4. Link to Full Candidate List */}
+        <section className="rounded-2xl bg-slate-50 border border-slate-200 p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="space-y-1 text-center sm:text-left">
+            <h3 className="text-base font-bold text-slate-900">Looking for all contestants & full vote tallies?</h3>
+            <p className="text-xs text-slate-500">
+              Explore the complete roster of contestants, official notifications, and candidate manifestos.
+            </p>
+          </div>
+          <Link
+            to="/candidates"
+            className="btn-primary py-2.5 px-6 text-xs font-bold shrink-0 shadow-sm"
+          >
+            View All Candidates & Ballot Roster →
+          </Link>
+        </section>
+
+        {/* 5. Campus Issues & Student Voices */}
+        <section className="space-y-4 pt-4">
+          <div className="flex items-end justify-between border-b border-slate-200 pb-3">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-brand-700">Campus Priorities</span>
+              <h2 className="text-xl font-bold font-display text-slate-900">Campus Issues Addressed</h2>
+            </div>
+            <Link to="/issues" className="text-xs font-bold text-brand-700 hover:underline">
+              View all issues →
             </Link>
           </div>
-          {trending.map(({ position, rows }) => (
-            <div key={position.id} className="space-y-3">
-              <h3 className="text-lg font-bold text-slate-800">{position.title}</h3>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {rows.map(({ candidate, votes }) => (
-                  <CandidateCard
-                    key={candidate.id}
-                    candidate={candidate}
-                    position={position}
-                    stats={completeness(ds, candidate)}
-                    votes={votes}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
-        </section>
-      )}
-
-      <HomeQuestionsSection issues={ds.issues} />
-
-      <section className="container-page space-y-4 pt-10">
-        <div className="flex items-end justify-between">
-          <h2 className="text-xl font-bold font-display">Campus issues</h2>
-          <Link to="/issues" className="text-sm font-semibold text-brand-700 hover:underline">
-            View all
-          </Link>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map((issue) => (
-            <IssueCard
-              key={issue.id}
-              issue={issue}
-              responses={issueResponseCount(ds, issue.id)}
-              total={ds.candidates.length}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="container-page grid gap-6 py-12 md:grid-cols-2">
-        <div className="card">
-          <h2 className="mb-4 text-xl font-bold font-display">Key dates</h2>
-          <ElectionTimeline events={ds.events} />
-          <Link to="/election-guide" className="mt-4 inline-block text-sm font-semibold text-brand-700 hover:underline">
-            Read the election guide →
-          </Link>
-        </div>
-        <div className="card space-y-4">
-          <h2 className="text-xl font-bold font-display">At a glance</h2>
-          <dl className="grid grid-cols-3 gap-3 text-center">
-            {[
-              ["Issues", ds.issues.length],
-              ["Candidates", ds.candidates.length],
-              ["Answers", ds.answers.length],
-            ].map(([label, value]) => (
-              <div key={label} className="rounded-xl bg-slate-50 border border-slate-100 p-3">
-                <dt className="text-xs text-slate-500 font-medium">{label}</dt>
-                <dd className="text-2xl font-bold text-brand-700">{value}</dd>
-              </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {featured.map((issue) => (
+              <IssueCard
+                key={issue.id}
+                issue={issue}
+                responses={issueResponseCount(ds, issue.id)}
+                total={ds.candidates.length}
+              />
             ))}
-          </dl>
-          <p className="text-sm text-slate-600">
-            Are you a candidate?{" "}
-            <Link to="/create" className="font-semibold text-brand-700 underline">
-              Create your profile
-            </Link>
-            . If your name is already listed, open that page and choose Claim this profile.
-          </p>
-        </div>
-      </section>
+          </div>
+        </section>
+
+        {/* 6. Questions Section */}
+        <HomeQuestionsSection issues={ds.issues} />
+      </main>
     </>
   );
 }

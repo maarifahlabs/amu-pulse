@@ -16,6 +16,7 @@ interface CandidateModalProps {
     photo_url?: string | null;
     source_url?: string | null;
     verification_status: VerificationStatus;
+    official_votes?: number | null;
   }) => Promise<void>;
   candidate?: AdminCandidateItem | null;
   positions: Position[];
@@ -41,6 +42,8 @@ export function CandidateModal({
   const [photoUrl, setPhotoUrl] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>("verified");
+  const [officialVotes, setOfficialVotes] = useState<string>("");
+
   const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -54,6 +57,7 @@ export function CandidateModal({
       setPhotoUrl(candidate.photo_url || "");
       setSourceUrl(candidate.official_source_url || "");
       setVerificationStatus(candidate.verification_status || "verified");
+      setOfficialVotes(candidate.official_votes != null ? String(candidate.official_votes) : "");
     } else {
       setName("");
       setPositionId(positions[0]?.id || "");
@@ -64,6 +68,7 @@ export function CandidateModal({
       setPhotoUrl("");
       setSourceUrl("");
       setVerificationStatus("verified");
+      setOfficialVotes("");
     }
     setFormError(null);
   }, [candidate, positions, isOpen]);
@@ -89,6 +94,12 @@ export function CandidateModal({
       return;
     }
 
+    const votesNum = officialVotes.trim() ? Number(officialVotes.trim()) : null;
+    if (officialVotes.trim() && (isNaN(Number(officialVotes)) || Number(officialVotes) < 0)) {
+      setFormError("Official votes must be a non-negative number.");
+      return;
+    }
+
     try {
       await onSubmit({
         id: candidate?.id,
@@ -101,6 +112,7 @@ export function CandidateModal({
         photo_url: photoUrl.trim() || null,
         source_url: sourceUrl.trim() || null,
         verification_status: verificationStatus,
+        official_votes: votesNum,
       });
       onClose();
     } catch (err) {
@@ -115,12 +127,12 @@ export function CandidateModal({
         <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50/80 px-6 py-4">
           <div>
             <h2 className="text-base font-bold font-display text-slate-900">
-              {isEdit ? "Edit Candidate Details" : "Register New Candidate"}
+              {isEdit ? "Edit Candidate & Votes" : "Register Candidate / Court Member"}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               {isEdit
                 ? `Updating official record for ${candidate?.name}`
-                : "Add an official contestant to the AMUSU ballot roster"}
+                : "Add a contestant or elected court member to the university roster"}
             </p>
           </div>
           <button
@@ -133,12 +145,36 @@ export function CandidateModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
           {formError && (
             <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-xs font-semibold text-red-800">
               {formError}
             </div>
           )}
+
+          {/* Official Votes Polled */}
+          <div className="rounded-xl border border-brand-200 bg-brand-50/50 p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <label htmlFor="cand-official-votes" className="text-xs font-bold uppercase tracking-wider text-brand-900">
+                Official Votes Polled
+              </label>
+              <span className="text-[11px] text-brand-800 font-medium">
+                Highest vote getter wins (top 10 for Cabinet)
+              </span>
+            </div>
+            <input
+              id="cand-official-votes"
+              type="number"
+              min="0"
+              value={officialVotes}
+              onChange={(e) => setOfficialVotes(e.target.value)}
+              placeholder="e.g. 7797"
+              className="input text-xs bg-white font-mono"
+            />
+            <p className="text-[10px] text-slate-500">
+              Actual votes declared by Chief Election Officer. Kept separate from platform votes.
+            </p>
+          </div>
 
           {/* Full Name & Position */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -159,7 +195,7 @@ export function CandidateModal({
 
             <div>
               <label htmlFor="cand-pos" className="label text-xs">
-                Contesting Post <span className="text-red-500">*</span>
+                Contesting Post / Court Faculty <span className="text-red-500">*</span>
               </label>
               <select
                 id="cand-pos"
@@ -209,7 +245,7 @@ export function CandidateModal({
                 onChange={(e) => setVerificationStatus(e.target.value as VerificationStatus)}
                 className="input text-xs font-semibold"
               >
-                <option value="verified">Verified (Official Ballot)</option>
+                <option value="verified">Verified (Official Ballot / Winner)</option>
                 <option value="unverified">Unverified (Pending Review)</option>
                 <option value="rejected">Rejected</option>
               </select>
@@ -247,21 +283,6 @@ export function CandidateModal({
             </div>
           </div>
 
-          {/* Bio / Agenda */}
-          <div>
-            <label htmlFor="cand-bio" className="label text-xs">
-              Candidate Statement / Bio
-            </label>
-            <textarea
-              id="cand-bio"
-              rows={3}
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="Candidate background, qualifications, priorities, and vision..."
-              className="input text-xs"
-            />
-          </div>
-
           {/* Photo URL & Official Source URL */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -293,6 +314,21 @@ export function CandidateModal({
             </div>
           </div>
 
+          {/* Bio / Agenda */}
+          <div>
+            <label htmlFor="cand-bio" className="label text-xs">
+              Candidate Statement / Bio
+            </label>
+            <textarea
+              id="cand-bio"
+              rows={3}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Candidate background, priorities, and vision..."
+              className="input text-xs"
+            />
+          </div>
+
           {/* Footer Actions */}
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
             <button
@@ -311,8 +347,8 @@ export function CandidateModal({
               {isSubmitting
                 ? "Saving..."
                 : isEdit
-                ? "Save Candidate Changes"
-                : "Create Candidate Profile"}
+                ? "Save Changes"
+                : "Register Candidate / Court Member"}
             </button>
           </div>
         </form>

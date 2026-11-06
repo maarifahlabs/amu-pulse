@@ -20,6 +20,7 @@ interface AdminCandidatesTabProps {
     photo_url?: string | null;
     source_url?: string | null;
     verification_status: VerificationStatus;
+    official_votes?: number | null;
   }) => Promise<void>;
   onToggleVerify: (id: string, currentStatus: VerificationStatus) => Promise<void>;
   onDeleteCandidate: (id: string) => Promise<void>;
@@ -455,17 +456,24 @@ export function AdminCandidatesTab({
 
                       {/* Verification Status */}
                       <td className="py-3 px-4 whitespace-nowrap">
-                        <span
-                          className={`badge text-[10px] font-bold ${
-                            cand.verification_status === "verified"
-                              ? "bg-emerald-100 text-emerald-800"
-                              : cand.verification_status === "rejected"
-                              ? "bg-rose-100 text-rose-800"
-                              : "bg-amber-100 text-amber-800"
-                          }`}
-                        >
-                          {cand.verification_status.toUpperCase()}
-                        </span>
+                        <div className="space-y-1">
+                          <span
+                            className={`badge text-[10px] font-bold ${
+                              cand.verification_status === "verified"
+                                ? "bg-emerald-100 text-emerald-800"
+                                : cand.verification_status === "rejected"
+                                ? "bg-rose-100 text-rose-800"
+                                : "bg-amber-100 text-amber-800"
+                            }`}
+                          >
+                            {cand.verification_status.toUpperCase()}
+                          </span>
+                          {cand.official_votes != null && (
+                            <div className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-800 border border-slate-200">
+                              Votes: {Number(cand.official_votes).toLocaleString("en-IN")}
+                            </div>
+                          )}
+                        </div>
                       </td>
 
                       {/* Claimed Account */}

@@ -68,6 +68,7 @@ interface CandidateInput {
   photo_url?: string | null;
   source_url?: string | null;
   verification_status?: VerificationStatus;
+  official_votes?: number | null;
 }
 
 function candidateBody(c: CandidateInput) {
@@ -81,6 +82,7 @@ function candidateBody(c: CandidateInput) {
     photo_url: c.photo_url || null,
     source_url: c.source_url || null,
     verification_status: c.verification_status || "verified",
+    official_votes: typeof c.official_votes === "number" ? c.official_votes : null,
   };
 }
 

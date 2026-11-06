@@ -68,10 +68,7 @@ function AppContent() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
       {!isAdminLogin && (
-        <>
-          <Header />
-          <DynamicMarquee />
-        </>
+        <Header />
       )}
       <main id="main" className={`flex-1 ${isAdminLogin ? "" : "pb-16"}`}>
         <Routes>
