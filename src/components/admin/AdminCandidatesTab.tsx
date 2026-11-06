@@ -20,9 +20,7 @@ interface AdminCandidatesTabProps {
     photo_url?: string | null;
     source_url?: string | null;
     verification_status: VerificationStatus;
-    is_winner?: boolean;
     official_votes?: number | null;
-    winner_rank?: number | null;
   }) => Promise<void>;
   onToggleVerify: (id: string, currentStatus: VerificationStatus) => Promise<void>;
   onDeleteCandidate: (id: string) => Promise<void>;
@@ -470,9 +468,9 @@ export function AdminCandidatesTab({
                           >
                             {cand.verification_status.toUpperCase()}
                           </span>
-                          {cand.is_winner && (
-                            <div className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-black text-amber-900 border border-amber-300">
-                              🏆 WINNER {cand.official_votes != null ? `(${Number(cand.official_votes).toLocaleString("en-IN")})` : ""}
+                          {cand.official_votes != null && (
+                            <div className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-800 border border-slate-200">
+                              Votes: {Number(cand.official_votes).toLocaleString("en-IN")}
                             </div>
                           )}
                         </div>

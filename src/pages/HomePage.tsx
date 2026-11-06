@@ -26,29 +26,28 @@ export function HomePage() {
     posMap.set(p.id, p);
   }
 
-  // Filter all officially elected winners
-  const allWinners = ds.candidates.filter((c) => Boolean(c.is_winner));
+  // Executive Chair Winners: highest official_votes for each post
+  const getTopCandidateForPosition = (slug: string) => {
+    return ds.candidates
+      .filter((c) => posMap.get(c.position_id)?.slug === slug && c.official_votes != null)
+      .sort((a, b) => (b.official_votes ?? 0) - (a.official_votes ?? 0))[0];
+  };
 
-  // Executive Chair Winners
-  const presidentWinner = allWinners.find((c) => posMap.get(c.position_id)?.slug === "president");
-  const vpWinner = allWinners.find((c) => posMap.get(c.position_id)?.slug === "vice-president");
-  const secWinner = allWinners.find((c) => posMap.get(c.position_id)?.slug === "honorary-secretary");
+  const presidentWinner = getTopCandidateForPosition("president");
+  const vpWinner = getTopCandidateForPosition("vice-president");
+  const secWinner = getTopCandidateForPosition("honorary-secretary");
 
-  // Cabinet Member Winners (Sorted by winner_rank or official_votes DESC)
-  const cabinetWinners = allWinners
-    .filter((c) => posMap.get(c.position_id)?.slug === "cabinet-member")
-    .sort((a, b) => {
-      if (a.winner_rank && b.winner_rank) return a.winner_rank - b.winner_rank;
-      return (b.official_votes ?? 0) - (a.official_votes ?? 0);
-    });
+  // Cabinet Member Winners: Top 10 by official_votes DESC
+  const cabinetWinners = ds.candidates
+    .filter((c) => posMap.get(c.position_id)?.slug === "cabinet-member" && c.official_votes != null)
+    .sort((a, b) => (b.official_votes ?? 0) - (a.official_votes ?? 0))
+    .slice(0, 10);
 
-  // University Court Winners (by faculty)
+  // University Court Winners: Top 1 (highest votes) for each faculty court position
   const courtPositions = ds.positions.filter((p) => p.slug.startsWith("court-"));
-  const courtWinners = allWinners
-    .filter((c) => {
-      const slug = posMap.get(c.position_id)?.slug;
-      return slug && slug.startsWith("court-");
-    })
+  const courtWinners = courtPositions
+    .map((pos) => getTopCandidateForPosition(pos.slug))
+    .filter((c): c is Candidate => Boolean(c))
     .sort((a, b) => (b.official_votes ?? 0) - (a.official_votes ?? 0));
 
   const filteredCourtWinners = selectedCourtSlug === "all"
